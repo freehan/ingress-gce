@@ -30,6 +30,7 @@ import (
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
 	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -170,11 +171,12 @@ func ensureNetworkEndpointGroup(svcNamespace, svcName, negName, zone, negService
 }
 
 // toZoneNetworkEndpointMap translates addresses in endpoints object into zone and endpoints map
-func toZoneNetworkEndpointMap(endpoints *apiv1.Endpoints, zoneGetter negtypes.ZoneGetter, targetPort string) (map[string]negtypes.NetworkEndpointSet, error) {
+func toZoneNetworkEndpointMap(endpoints *apiv1.Endpoints, zoneGetter negtypes.ZoneGetter, targetPort string) (map[string]negtypes.NetworkEndpointSet, map[negtypes.NetworkEndpoint]types.NamespacedName, error) {
 	zoneNetworkEndpointMap := map[string]negtypes.NetworkEndpointSet{}
+	networkEndpointPodMap := map[negtypes.NetworkEndpoint]types.NamespacedName{}
 	if endpoints == nil {
 		klog.Errorf("Endpoint object is nil")
-		return zoneNetworkEndpointMap, nil
+		return zoneNetworkEndpointMap, networkEndpointPodMap, nil
 	}
 	targetPortNum, _ := strconv.Atoi(targetPort)
 	for _, subset := range endpoints.Subsets {
@@ -207,17 +209,23 @@ func toZoneNetworkEndpointMap(endpoints *apiv1.Endpoints, zoneGetter negtypes.Zo
 				klog.V(2).Infof("Endpoint %q in Endpoints %s/%s does not have an associated node. Skipping", address.IP, endpoints.Namespace, endpoints.Name)
 				continue
 			}
+			if address.TargetRef == nil {
+				klog.V(2).Infof("Endpoint %q in Endpoints %s/%s does not have an associated pod. Skipping", address.IP, endpoints.Namespace, endpoints.Name)
+				continue
+			}
 			zone, err := zoneGetter.GetZoneForNode(*address.NodeName)
 			if err != nil {
-				return nil, err
+				return nil, nil, fmt.Errorf("failed to retrieve associated zone of node %q: %v", *address.NodeName, err)
 			}
 			if zoneNetworkEndpointMap[zone] == nil {
 				zoneNetworkEndpointMap[zone] = negtypes.NewNetworkEndpointSet()
 			}
-			zoneNetworkEndpointMap[zone].Insert(negtypes.NetworkEndpoint{IP: address.IP, Port: matchPort, Node: *address.NodeName})
+			networkEndpoint := negtypes.NetworkEndpoint{IP: address.IP, Port: matchPort, Node: *address.NodeName}
+			zoneNetworkEndpointMap[zone].Insert(networkEndpoint)
+			networkEndpointPodMap[networkEndpoint] = types.NamespacedName{Namespace: address.TargetRef.Namespace, Name: address.TargetRef.Name}
 		}
 	}
-	return zoneNetworkEndpointMap, nil
+	return zoneNetworkEndpointMap, networkEndpointPodMap, nil
 }
 
 // retrieveExistingZoneNetworkEndpointMap lists existing network endpoints in the neg and return the zone and endpoints map

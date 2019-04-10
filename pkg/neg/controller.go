@@ -35,6 +35,7 @@ import (
 	"k8s.io/ingress-gce/pkg/annotations"
 	"k8s.io/ingress-gce/pkg/context"
 	"k8s.io/ingress-gce/pkg/neg/metrics"
+	"k8s.io/ingress-gce/pkg/neg/readiness"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
 	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
@@ -69,6 +70,9 @@ type Controller struct {
 
 	// syncTracker tracks the latest time that service and endpoint changes are processed
 	syncTracker utils.TimeTracker
+
+	// reflector handles NEG readiness gate and conditions for pods in NEG.
+	reflector readiness.Reflector
 }
 
 // NewController returns a network endpoint group controller.
@@ -90,7 +94,8 @@ func NewController(
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme,
 		apiv1.EventSource{Component: "neg-controller"})
 
-	manager := newSyncerManager(namer, recorder, cloud, zoneGetter, ctx.ServiceInformer.GetIndexer(), ctx.EndpointInformer.GetIndexer(), negSyncerType)
+	reflector := readiness.NewReadienssReflector(ctx)
+	manager := newSyncerManager(namer, recorder, cloud, zoneGetter, ctx.ServiceInformer.GetIndexer(), ctx.EndpointInformer.GetIndexer(), negSyncerType, reflector)
 
 	negController := &Controller{
 		client:         ctx.KubeClient,
@@ -108,6 +113,7 @@ func NewController(
 		serviceQueue:   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		endpointQueue:  workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		syncTracker:    utils.NewTimeTracker(),
+		reflector:      reflector,
 	}
 
 	ctx.IngressInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -157,6 +163,15 @@ func NewController(
 			negController.enqueueEndpoint(cur)
 		},
 	})
+
+	ctx.PodInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    negController.reflector.SyncPod,
+		DeleteFunc: negController.reflector.SyncPod,
+		UpdateFunc: func(old, cur interface{}) {
+			negController.reflector.SyncPod(cur)
+		},
+	})
+
 	ctx.AddHealthCheck("neg-controller", negController.IsHealthy)
 	return negController
 }
@@ -292,7 +307,7 @@ func (c *Controller) processService(key string) error {
 		// Only service ports referenced by ingress are synced for NEG
 		ings := getIngressServicesFromStore(c.ingressLister, service)
 		ingressSvcPorts := gatherPortMappingUsedByIngress(ings, service)
-		ingressPortInfoMap := negtypes.NewPortInfoMap(namespace, name, ingressSvcPorts, c.namer)
+		ingressPortInfoMap := negtypes.NewPortInfoMap(namespace, name, ingressSvcPorts, c.namer, true)
 		if err := portInfoMap.Merge(ingressPortInfoMap); err != nil {
 			return fmt.Errorf("failed to merge service ports referenced by ingress (%v): %v", ingressPortInfoMap, err)
 		}
@@ -310,7 +325,7 @@ func (c *Controller) processService(key string) error {
 			return err
 		}
 
-		if err := portInfoMap.Merge(negtypes.NewPortInfoMap(namespace, name, exposedNegSvcPort, c.namer)); err != nil {
+		if err := portInfoMap.Merge(negtypes.NewPortInfoMap(namespace, name, exposedNegSvcPort, c.namer, false)); err != nil {
 			return fmt.Errorf("failed to merge service ports exposed as standalone NEGs (%v) into ingress referenced service ports (%v): %v", exposedNegSvcPort, portInfoMap, err)
 		}
 	}

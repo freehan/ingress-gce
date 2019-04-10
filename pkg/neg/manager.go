@@ -27,6 +27,7 @@ import (
 	negsyncer "k8s.io/ingress-gce/pkg/neg/syncers"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
 	"k8s.io/klog"
+	"k8s.io/ingress-gce/pkg/neg/readiness"
 )
 
 type serviceKey struct {
@@ -55,9 +56,11 @@ type syncerManager struct {
 	// syncerMap stores the NEG syncer
 	// key consists of service namespace, name and targetPort. Value is the corresponding syncer.
 	syncerMap map[negsyncer.NegSyncerKey]negtypes.NegSyncer
+	// reflector handles NEG readiness gate and conditions for pods in NEG.
+	reflector readiness.Reflector
 }
 
-func newSyncerManager(namer negtypes.NetworkEndpointGroupNamer, recorder record.EventRecorder, cloud negtypes.NetworkEndpointGroupCloud, zoneGetter negtypes.ZoneGetter, serviceLister cache.Indexer, endpointLister cache.Indexer, negSyncerType NegSyncerType) *syncerManager {
+func newSyncerManager(namer negtypes.NetworkEndpointGroupNamer, recorder record.EventRecorder, cloud negtypes.NetworkEndpointGroupCloud, zoneGetter negtypes.ZoneGetter, serviceLister cache.Indexer, endpointLister cache.Indexer, negSyncerType NegSyncerType, reflector readiness.Reflector) *syncerManager {
 	klog.V(2).Infof("NEG controller will use NEG syncer type: %q", negSyncerType)
 	return &syncerManager{
 		negSyncerType:  negSyncerType,
@@ -69,6 +72,7 @@ func newSyncerManager(namer negtypes.NetworkEndpointGroupNamer, recorder record.
 		endpointLister: endpointLister,
 		svcPortMap:     make(map[serviceKey]negtypes.PortInfoMap),
 		syncerMap:      make(map[negsyncer.NegSyncerKey]negtypes.NegSyncer),
+		reflector: 		reflector,
 	}
 }
 
@@ -116,6 +120,7 @@ func (manager *syncerManager) EnsureSyncers(namespace, name string, newPorts neg
 					manager.zoneGetter,
 					manager.serviceLister,
 					manager.endpointLister,
+					manager.reflector,
 				)
 			} else {
 				// Use batch syncer by default
@@ -140,6 +145,8 @@ func (manager *syncerManager) EnsureSyncers(namespace, name string, newPorts neg
 		}
 	}
 
+	// notify readiness reflector
+	manager.reflector.SyncNegService(namespace, name, newPorts.NegsWithReadinessGate())
 	return utilerrors.NewAggregate(errList)
 }
 

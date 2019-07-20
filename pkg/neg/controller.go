@@ -60,6 +60,7 @@ type Controller struct {
 	ingressLister cache.Indexer
 	serviceLister cache.Indexer
 	client        kubernetes.Interface
+	defaultBackendService utils.ServicePortID
 
 	// serviceQueue takes service key as work item. Service key with format "namespace/name".
 	serviceQueue workqueue.RateLimitingInterface
@@ -111,6 +112,7 @@ func NewController(
 		recorder:      recorder,
 		zoneGetter:    zoneGetter,
 		namer:         namer,
+		defaultBackendService: ctx.DefaultBackendSvcPortID,
 		hasSynced:     ctx.HasSynced,
 		ingressLister: ctx.IngressInformer.GetIndexer(),
 		serviceLister: ctx.ServiceInformer.GetIndexer(),
@@ -300,15 +302,31 @@ func (c *Controller) processService(key string) error {
 		}
 	}
 
+
+	portInfoMap := make(negtypes.PortInfoMap)
+	needNeg := false
+	//process default backend service
+	if c.defaultBackendService.Service.String() == key {
+		portInfoMap = c.processDefaultBackendService()
+
+		if len(portInfoMap) > 0 {
+			needNeg = true
+		}
+	// process normal service
+	} else {
+		if foundNEGAnnotation && negAnnotation != nil && negAnnotation.NEGEnabled() {
+			needNeg = true
+		}
+	}
+
 	// If neg annotation is not found or NEG is not enabled
-	if !foundNEGAnnotation || negAnnotation == nil || !negAnnotation.NEGEnabled() {
+	if !needNeg {
 		c.manager.StopSyncer(namespace, name)
 		// delete the annotation
 		return c.syncNegStatusAnnotation(namespace, name, make(negtypes.PortInfoMap))
 	}
-
 	klog.V(2).Infof("Syncing service %q", key)
-	portInfoMap := make(negtypes.PortInfoMap)
+
 	// handle NEGs used by ingress
 	if negAnnotation.NEGEnabledForIngress() {
 		// Only service ports referenced by ingress are synced for NEG
@@ -433,6 +451,19 @@ func (c *Controller) gc() {
 	}
 }
 
+func (c *Controller) processDefaultBackendService() negtypes.PortInfoMap {
+	for _, m := range c.ingressLister.List() {
+		ing := *m.(*extensions.Ingress)
+		// TODO: only ilb ingress
+
+		if ing.Spec.Backend == nil {
+			// TODO: fetch svc port target port on demand
+			return negtypes.NewPortInfoMap(c.defaultBackendService.Service.Namespace, c.defaultBackendService.Service.Name, negtypes.SvcPortMap{int32(80):"8080"}, c.namer, false)
+		}
+	}
+	return make(negtypes.PortInfoMap)
+}
+
 // gatherPortMappingUsedByIngress returns a map containing port:targetport
 // of all service ports of the service that are referenced by ingresses
 func gatherPortMappingUsedByIngress(ings []extensions.Ingress, svc *apiv1.Service) negtypes.SvcPortMap {
@@ -508,3 +539,6 @@ func getIngressServicesFromStore(store cache.Store, svc *apiv1.Service) (ings []
 	}
 	return
 }
+
+
+

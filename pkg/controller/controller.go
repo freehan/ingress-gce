@@ -107,7 +107,8 @@ func NewLoadBalancerController(
 	healthChecker := healthchecks.NewHealthChecker(ctx.Cloud, ctx.HealthCheckPath, ctx.DefaultBackendHealthCheckPath, ctx.ClusterNamer, ctx.DefaultBackendSvcPortID.Service)
 	instancePool := instances.NewNodePool(ctx.Cloud, ctx.ClusterNamer)
 
-	backendPool := backends.NewPool(ctx.Cloud, ctx.ClusterNamer)
+	//backendPool := backends.NewPool(ctx.Cloud, ctx.ClusterNamer)
+	backendPool := backends.NewPool(ctx.Cloud)
 
 	lbc := LoadBalancerController{
 		ctx:           ctx,
@@ -118,10 +119,14 @@ func NewLoadBalancerController(
 		hasSynced:     ctx.HasSynced,
 		nodes:         NewNodeController(ctx, instancePool),
 		instancePool:  instancePool,
-		l7Pool:        loadbalancers.NewLoadBalancerPool(ctx.Cloud, ctx.ClusterNamer, ctx),
-		backendSyncer: backends.NewBackendSyncer(backendPool, healthChecker, ctx.ClusterNamer, ctx.Cloud),
-		negLinker:     backends.NewNEGLinker(backendPool, negtypes.NewAdapter(ctx.Cloud), ctx.ClusterNamer, ctx.Cloud),
-		igLinker:      backends.NewInstanceGroupLinker(instancePool, backendPool, ctx.ClusterNamer),
+		//l7Pool:        loadbalancers.NewLoadBalancerPool(ctx.Cloud, ctx.ClusterNamer, ctx),
+		//backendSyncer: backends.NewBackendSyncer(backendPool, healthChecker, ctx.ClusterNamer, ctx.Cloud),
+		//negLinker:     backends.NewNEGLinker(backendPool, negtypes.NewAdapter(ctx.Cloud), ctx.ClusterNamer, ctx.Cloud),
+		//igLinker:      backends.NewInstanceGroupLinker(instancePool, backendPool, ctx.ClusterNamer),
+		l7Pool:	loadbalancers.NewLoadBalancerPool(ctx.Cloud, ctx.ClusterNamer, ctx),
+		backendSyncer: backends.NewBackendSyncer(backendPool, healthChecker, ctx.Cloud),
+		negLinker:     backends.NewNEGLinker(backendPool, negtypes.NewAdapter(ctx.Cloud), ctx.Cloud),
+		igLinker:      backends.NewInstanceGroupLinker(instancePool, backendPool),
 	}
 	lbc.ingSyncer = ingsync.NewIngressSyncer(&lbc)
 
@@ -138,6 +143,10 @@ func NewLoadBalancerController(
 
 			klog.V(3).Infof("Ingress %v added, enqueuing", utils.IngressKeyFunc(addIng))
 			lbc.ctx.Recorder(addIng.Namespace).Eventf(addIng, apiv1.EventTypeNormal, "ADD", utils.IngressKeyFunc(addIng))
+
+
+			// if ingress does not have naming scheme annotation, add naming scheme annotation and skip enqueue
+
 			lbc.ingQueue.Enqueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -420,6 +429,7 @@ func (lbc *LoadBalancerController) SyncLoadBalancer(state interface{}) error {
 		return fmt.Errorf("expected state type to be syncState, type was %T", state)
 	}
 
+	// toRuntimeInfo does not return all the lb resources.
 	lb, err := lbc.toRuntimeInfo(syncState.ing, syncState.urlMap)
 	if err != nil {
 		return err
@@ -468,6 +478,8 @@ func (lbc *LoadBalancerController) sync(key string) error {
 		time.Sleep(context.StoreSyncPollPeriod)
 		return fmt.Errorf("waiting for stores to sync")
 	}
+
+
 	klog.V(3).Infof("Syncing %v", key)
 
 	// Create state needed for GC.
@@ -483,6 +495,17 @@ func (lbc *LoadBalancerController) sync(key string) error {
 	if err != nil {
 		return fmt.Errorf("error getting Ingress for key %s: %v", key, err)
 	}
+
+
+	// get ingress object
+	// check if the ingress has naming scheme
+	// if yes. proceed with the specified naming scheme
+	// if not, do a get Urlmap call to see if the old naming scheme exists.
+	// if so, update naming scheme annotation/finalizer and use the new naming scheme. (consider exist sync to wait for the ingress update event, or just proceed sync. this will result in double syncing)
+	// if no urlmap exists, update naming scheme to the new one.
+	// flag gate this behavior
+
+
 	gcState := &gcState{lbc.ctx.Ingresses().List(), lbNames, gceSvcPorts}
 	if !ingExists || utils.IsDeletionCandidate(ing.ObjectMeta, utils.FinalizerKey) {
 		klog.V(2).Infof("Ingress %q no longer exists, triggering GC", key)
@@ -580,7 +603,7 @@ func (lbc *LoadBalancerController) updateIngressStatus(l7 *loadbalancers.L7, ing
 
 // toRuntimeInfo returns L7RuntimeInfo for the given ingress.
 func (lbc *LoadBalancerController) toRuntimeInfo(ing *v1beta1.Ingress, urlMap *utils.GCEURLMap) (*loadbalancers.L7RuntimeInfo, error) {
-	k, err := utils.KeyFunc(ing)
+	var err error
 	if err != nil {
 		return nil, fmt.Errorf("cannot get key for Ingress %v/%v: %v", ing.Namespace, ing.Name, err)
 	}
@@ -612,7 +635,6 @@ func (lbc *LoadBalancerController) toRuntimeInfo(ing *v1beta1.Ingress, urlMap *u
 	}
 
 	return &loadbalancers.L7RuntimeInfo{
-		Name:           k,
 		TLS:            tls,
 		TLSName:        annotations.UseNamedTLS(),
 		Ingress:        ing,

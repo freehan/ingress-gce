@@ -28,38 +28,63 @@ import (
 	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 	"k8s.io/legacy-cloud-providers/gce"
+	"k8s.io/ingress-gce/pkg/utils/namer"
 )
 
 // L7s implements LoadBalancerPool.
 type L7s struct {
 	cloud            *gce.Cloud
-	namer            *utils.Namer
+	//namer            *utils.Namer
+	namerMap map[namer.Scheme]namer.LoadBalancerFrontendNamer
+
+	factory namer.IngressFrontendNamerFactory
 	recorderProducer events.RecorderProducer
 }
 
 // Namer returns the namer associated with the L7s.
-func (l *L7s) Namer() *utils.Namer {
-	return l.namer
+//func (l *L7s) Namer() *utils.Namer {
+//	return l.namer
+//}
+
+func (l *L7s) Namer(scheme namer.Scheme) (namer.LoadBalancerFrontendNamer, bool){
+	namer, ok := l.namerMap[scheme]
+	return namer, ok
 }
 
 // NewLoadBalancerPool returns a new loadbalancer pool.
 // - cloud: implements LoadBalancers. Used to sync L7 loadbalancer resources
 //	 with the cloud.
-func NewLoadBalancerPool(cloud *gce.Cloud, namer *utils.Namer, recorderProducer events.RecorderProducer) LoadBalancerPool {
+func NewLoadBalancerPool(cloud *gce.Cloud, n *namer.Namer, recorderProducer events.RecorderProducer) LoadBalancerPool {
+	namerMap := map[namer.Scheme]namer.LoadBalancerFrontendNamer{
+		namer.LegacyNamingScheme: namer.NewLegacyFrontendNamer(n),
+		namer.V2NamingScheme: namer.NewV1FrontEndNamer(n.UID()),
+	}
+
 	return &L7s{
 		cloud:            cloud,
-		namer:            namer,
+		//namer:            namer,
+		namerMap: namerMap,
 		recorderProducer: recorderProducer,
 	}
 }
 
 // Ensure ensures a loadbalancer and its resources given the RuntimeInfo
 func (l *L7s) Ensure(ri *L7RuntimeInfo) (*L7, error) {
+	scheme, err := namer.GetNamingScheme(ri.Ingress)
+	if err != nil {
+		return nil, err
+	}
+	namer, ok := l.Namer(scheme)
+	if !ok {
+		//do something
+	}
+	l.factory.CreateIngressFrontendNamer(scheme, ri.Ingress)
+
+
 	lb := &L7{
 		runtimeInfo: ri,
-		Name:        l.namer.LoadBalancer(ri.Name),
 		cloud:       l.cloud,
-		namer:       l.namer,
+		frontEndNamer: namer,
 		recorder:    l.recorderProducer.Recorder(ri.Ingress.Namespace),
 		scope:       features.ScopeFromIngress(ri.Ingress),
 		ingress:     *ri.Ingress,
@@ -111,6 +136,13 @@ func (l *L7s) List(key *meta.Key, version meta.Version) ([]*composite.UrlMap, er
 func (l *L7s) GC(names []string) error {
 	klog.V(2).Infof("GC(%v)", names)
 
+
+	// GC and Ensure is not symmetric. Ensure takes L7RUntime vs. GC takes name
+	// Need to update GC to handle different naming scheme
+	// consider not using lb names as input
+	// use ingress object directly
+	// or use namespace+name+naming scheme
+	// or use namespace+name+ namer
 	knownLoadBalancers := sets.NewString()
 	for _, n := range names {
 		knownLoadBalancers.Insert(l.namer.LoadBalancer(n))

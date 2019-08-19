@@ -32,6 +32,8 @@ type GCEURLMap struct {
 	HostRules []HostRule
 	// hosts is a map of existing hosts.
 	hosts map[string]bool
+	// naming scheme version?
+	// or the namer interface
 }
 
 // HostRule encapsulates the Hostname and its list of PathRules.

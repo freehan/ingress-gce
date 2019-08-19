@@ -25,6 +25,8 @@ import (
 
 // FinalizerKey is the string representing the Ingress finalizer.
 const FinalizerKey = "networking.gke.io/ingress-finalizer"
+const FinalizerKeyV1 = "networking.gke.io/ingress-finalizer-v1-naming"
+const FinalizerKeyV2 = "networking.gke.io/ingress-finalizer-v2-naming"
 
 // IsDeletionCandidate is true if the passed in meta contains the specified finalizer.
 func IsDeletionCandidate(m meta_v1.ObjectMeta, key string) bool {

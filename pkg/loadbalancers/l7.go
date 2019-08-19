@@ -35,6 +35,7 @@ import (
 	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 	"k8s.io/legacy-cloud-providers/gce"
+	"k8s.io/ingress-gce/pkg/utils/namer"
 )
 
 const (
@@ -50,7 +51,7 @@ const (
 // L7RuntimeInfo is info passed to this module from the controller runtime.
 type L7RuntimeInfo struct {
 	// Name is the name of a loadbalancer.
-	Name string
+	// Name string
 	// IP is the desired ip of the loadbalancer, eg from a staticIP.
 	IP string
 	// TLS are the tls certs to use in termination.
@@ -85,13 +86,13 @@ type TLSCerts struct {
 }
 
 // String returns the load balancer name
-func (l *L7RuntimeInfo) String() string {
-	return l.Name
-}
+//func (l *L7RuntimeInfo) String() string {
+//	return l.Name
+//}
 
 // L7 represents a single L7 loadbalancer.
 type L7 struct {
-	Name string
+	//Name string
 	// runtimeInfo is non-cloudprovider information passed from the controller.
 	runtimeInfo *L7RuntimeInfo
 	// ingress stores the ingress
@@ -118,7 +119,10 @@ type L7 struct {
 	// prevents leakage if there's a failure along the way.
 	oldSSLCerts []*composite.SslCertificate
 	// namer is used to compute names of the various sub-components of an L7.
-	namer *utils.Namer
+	// make namer an interface instead of implementation
+	frontEndNamer namer.IngressFrontendNamer
+
+	//namer *utils.Namer
 	// recorder is used to generate k8s Events.
 	recorder record.EventRecorder
 	// resource type stores the KeyType of the resources in the loadbalancer (e.g. Regional)
@@ -227,7 +231,7 @@ func (l *L7) Cleanup(versions *features.ResourceVersions) error {
 	var key *meta.Key
 	var err error
 
-	fwName := l.namer.ForwardingRule(l.Name, utils.HTTPProtocol)
+	fwName := l.frontEndNamer.ForwardingRule(namer.HTTPProtocol)
 	klog.V(2).Infof("Deleting global forwarding rule %v", fwName)
 	if key, err = l.CreateKey(fwName); err != nil {
 		return err
@@ -236,7 +240,7 @@ func (l *L7) Cleanup(versions *features.ResourceVersions) error {
 		return err
 	}
 
-	fwsName := l.namer.ForwardingRule(l.Name, utils.HTTPSProtocol)
+	fwsName := l.frontEndNamer.ForwardingRule(namer.HTTPSProtocol)
 	klog.V(2).Infof("Deleting global forwarding rule %v", fwsName)
 	if key, err = l.CreateKey(fwsName); err != nil {
 		return err
@@ -253,7 +257,7 @@ func (l *L7) Cleanup(versions *features.ResourceVersions) error {
 		}
 	}
 
-	tpName := l.namer.TargetProxy(l.Name, utils.HTTPProtocol)
+	tpName := l.frontEndNamer.TargetProxy(namer.HTTPProtocol)
 	klog.V(2).Infof("Deleting target http proxy %v", tpName)
 	if key, err = l.CreateKey(tpName); err != nil {
 		return err
@@ -262,7 +266,7 @@ func (l *L7) Cleanup(versions *features.ResourceVersions) error {
 		return err
 	}
 
-	tpsName := l.namer.TargetProxy(l.Name, utils.HTTPSProtocol)
+	tpsName := l.frontEndNamer.TargetProxy(l.ingress.Namespace, l.ingress.Name, namer.HTTPSProtocol)
 	klog.V(2).Infof("Deleting target https proxy %v", tpsName)
 	if key, err = l.CreateKey(tpsName); err != nil {
 		return err
@@ -295,7 +299,7 @@ func (l *L7) Cleanup(versions *features.ResourceVersions) error {
 		}
 	}
 
-	umName := l.namer.UrlMap(l.Name)
+	umName := l.frontEndNamer.UrlMap(l.ingress.Namespace, l.ingress.Name)
 	klog.V(2).Infof("Deleting URL Map %v", umName)
 	if key, err = l.CreateKey(umName); err != nil {
 		return err

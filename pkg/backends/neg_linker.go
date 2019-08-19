@@ -26,7 +26,7 @@ import (
 type negLinker struct {
 	backendPool Pool
 	negGetter   NEGGetter
-	namer       *utils.Namer
+	//namer       *utils.Namer
 	cloud       *gce.Cloud
 }
 
@@ -36,12 +36,12 @@ var _ Linker = (*negLinker)(nil)
 func NewNEGLinker(
 	backendPool Pool,
 	negGetter NEGGetter,
-	namer *utils.Namer,
+	//namer *utils.Namer,
 	cloud *gce.Cloud) Linker {
 	return &negLinker{
 		backendPool: backendPool,
 		negGetter:   negGetter,
-		namer:       namer,
+		//namer:       namer,
 		cloud:       cloud,
 	}
 }
@@ -55,7 +55,8 @@ func (l *negLinker) Link(sp utils.ServicePort, groups []GroupKey) error {
 		// Otherwise, generate the name using the namer.
 		negName := group.Name
 		if negName == "" {
-			negName = sp.BackendName(l.namer)
+			//negName = sp.BackendName(l.namer)
+			negName = sp.BackendName()
 		}
 		neg, err := l.negGetter.GetNetworkEndpointGroup(negName, group.Zone)
 		if err != nil {
@@ -64,7 +65,8 @@ func (l *negLinker) Link(sp utils.ServicePort, groups []GroupKey) error {
 		negs = append(negs, neg)
 	}
 
-	beName := sp.BackendName(l.namer)
+	//beName := sp.BackendName(l.namer)
+	beName := sp.BackendName()
 
 	version := befeatures.VersionFromServicePort(&sp)
 	scope := befeatures.ScopeFromServicePort(&sp)

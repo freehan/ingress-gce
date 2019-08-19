@@ -33,6 +33,7 @@ import (
 	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 	"k8s.io/legacy-cloud-providers/gce"
+	"k8s.io/ingress-gce/pkg/utils/namer"
 )
 
 const (
@@ -46,7 +47,7 @@ type ControllerContext struct {
 
 	Cloud *gce.Cloud
 
-	ClusterNamer *utils.Namer
+	ClusterNamer *namer.Namer
 
 	ControllerContextConfig
 

@@ -65,7 +65,7 @@ const maxRPS = 1
 type instanceGroupLinker struct {
 	instancePool instances.NodePool
 	backendPool  Pool
-	namer        *utils.Namer
+	//namer        *utils.Namer
 }
 
 // instanceGroupLinker is a Linker
@@ -74,11 +74,12 @@ var _ Linker = (*instanceGroupLinker)(nil)
 func NewInstanceGroupLinker(
 	instancePool instances.NodePool,
 	backendPool Pool,
-	namer *utils.Namer) Linker {
+	//namer *utils.Namer
+	) Linker {
 	return &instanceGroupLinker{
 		instancePool: instancePool,
 		backendPool:  backendPool,
-		namer:        namer,
+		//namer:        namer,
 	}
 }
 
@@ -86,7 +87,8 @@ func NewInstanceGroupLinker(
 func (l *instanceGroupLinker) Link(sp utils.ServicePort, groups []GroupKey) error {
 	var igLinks []string
 	for _, group := range groups {
-		ig, err := l.instancePool.Get(l.namer.InstanceGroup(), group.Zone)
+		//ig, err := l.instancePool.Get(l.namer.InstanceGroup(), group.Zone)
+		ig, err := l.instancePool.Get(sp.GCEBackendName, group.Zone)
 		if err != nil {
 			return fmt.Errorf("error retrieving IG for linking with backend %+v: %v", sp, err)
 		}
@@ -96,7 +98,8 @@ func (l *instanceGroupLinker) Link(sp utils.ServicePort, groups []GroupKey) erro
 	// ig_linker only supports L7 HTTP(s) External Load Balancer
 	// Hardcoded here since IGs are not supported for non GA-Global right now
 	// TODO(shance): find a way to remove hardcoded values
-	be, err := l.backendPool.Get(sp.BackendName(l.namer), meta.VersionGA, meta.Global)
+	//be, err := l.backendPool.Get(sp.BackendName(l.namer), meta.VersionGA, meta.Global)
+	be, err := l.backendPool.Get(sp.BackendName(), meta.VersionGA, meta.Global)
 	if err != nil {
 		return err
 	}

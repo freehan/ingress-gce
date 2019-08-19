@@ -36,7 +36,7 @@ type backendSyncer struct {
 	backendPool   Pool
 	healthChecker healthchecks.HealthChecker
 	prober        ProbeProvider
-	namer         *utils.Namer
+	//namer         *utils.Namer
 	cloud         *gce.Cloud
 }
 
@@ -46,12 +46,12 @@ var _ Syncer = (*backendSyncer)(nil)
 func NewBackendSyncer(
 	backendPool Pool,
 	healthChecker healthchecks.HealthChecker,
-	namer *utils.Namer,
+	//namer *utils.Namer,
 	cloud *gce.Cloud) Syncer {
 	return &backendSyncer{
 		backendPool:   backendPool,
 		healthChecker: healthChecker,
-		namer:         namer,
+		//namer:         namer,
 		cloud:         cloud,
 	}
 }
@@ -77,7 +77,8 @@ func (s *backendSyncer) ensureBackendService(sp utils.ServicePort) error {
 	// We must track the ports even if creating the backends failed, because
 	// we might've created health-check for them.
 	be := &composite.BackendService{}
-	beName := sp.BackendName(s.namer)
+	//beName := sp.BackendName(s.namer)
+	beName := sp.BackendName()
 	version := features.VersionFromServicePort(&sp)
 	scope := features.ScopeFromServicePort(&sp)
 
@@ -219,7 +220,8 @@ func knownPortsFromServicePorts(cloud *gce.Cloud, namer *utils.Namer, svcPorts [
 	knownPorts := sets.NewString()
 
 	for _, sp := range svcPorts {
-		name := sp.BackendName(namer)
+		//name := sp.BackendName(namer)
+		name := sp.BackendName()
 		if key, err := composite.CreateKey(cloud, name, features.ScopeFromServicePort(&sp)); err != nil {
 			return nil, err
 		} else {

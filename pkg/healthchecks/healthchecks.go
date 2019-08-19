@@ -100,7 +100,8 @@ func (h *HealthChecks) New(sp utils.ServicePort) *HealthCheck {
 	}
 	// port is the key for retrieving existing health-check
 	// TODO: rename backend-service and health-check to not use port as key
-	hc.Name = sp.BackendName(h.namer)
+	//hc.Name = sp.BackendName(h.namer)
+	hc.Name = sp.BackendName()
 	hc.Port = sp.NodePort
 	hc.RequestPath = h.pathFromSvcPort(sp)
 	return hc

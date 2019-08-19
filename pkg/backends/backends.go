@@ -29,7 +29,7 @@ import (
 // Backends handles CRUD operations for backends.
 type Backends struct {
 	cloud *gce.Cloud
-	namer *utils.Namer
+	//namer *utils.Namer
 }
 
 // Backends is a Pool.
@@ -38,10 +38,11 @@ var _ Pool = (*Backends)(nil)
 // NewPool returns a new backend pool.
 // - cloud: implements BackendServices
 // - namer: produces names for backends.
-func NewPool(cloud *gce.Cloud, namer *utils.Namer) *Backends {
+//func NewPool(cloud *gce.Cloud, namer *utils.Namer) *Backends {
+func NewPool(cloud *gce.Cloud) *Backends {
 	return &Backends{
 		cloud: cloud,
-		namer: namer,
+		//namer: namer,
 	}
 }
 
@@ -59,9 +60,11 @@ func ensureDescription(be *composite.BackendService, sp *utils.ServicePort) (nee
 
 // Create implements Pool.
 func (b *Backends) Create(sp utils.ServicePort, hcLink string) (*composite.BackendService, error) {
-	name := sp.BackendName(b.namer)
+	//name := sp.BackendName(b.namer)
+	name := sp.BackendName()
 	namedPort := &compute.NamedPort{
-		Name: b.namer.NamedPort(sp.NodePort),
+		//Name: b.namer.NamedPort(sp.NodePort),
+		Name: sp.NamedPortname,
 		Port: sp.NodePort,
 	}
 

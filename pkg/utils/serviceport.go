@@ -50,6 +50,13 @@ type ServicePort struct {
 	NEGEnabled    bool
 	L7ILBEnabled  bool
 	BackendConfig *backendconfigv1beta1.BackendConfig
+
+	// Name of the backend service
+	GCEBackendServiceName string
+	// Name of the backend within backend service
+	GCEBackendName string
+	// Name of the named port
+	GCENamedPortname string
 }
 
 // GetDescription returns a Description for this ServicePort.
@@ -61,12 +68,14 @@ func (sp ServicePort) GetDescription() Description {
 }
 
 // BackendName returns the name of the backend which would be used for this ServicePort.
-func (sp ServicePort) BackendName(namer *Namer) string {
-	if !sp.NEGEnabled {
-		return namer.IGBackend(sp.NodePort)
-	}
-
-	return namer.NEG(sp.ID.Service.Namespace, sp.ID.Service.Name, sp.Port)
+//func (sp ServicePort) BackendName(namer *Namer) string {
+	//if !sp.NEGEnabled {
+	//	return namer.IGBackend(sp.NodePort)
+	//}
+	//
+	//return namer.NEG(sp.ID.Service.Namespace, sp.ID.Service.Name, sp.Port)
+func (sp ServicePort) BackendName() string {
+	return sp.BackendServiceName
 }
 
 // BackendToServicePortID creates a ServicePortID from a given IngressBackend and namespace.

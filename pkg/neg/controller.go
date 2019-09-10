@@ -344,6 +344,43 @@ func (c *Controller) processService(key string) error {
 		}
 	}
 
+
+	// case 1 default backend (flags.F.EnableL7Ilb && c.defaultBackendService.ID.Service.String() == key )
+	// case 2 csm    (destinationRule + Service)
+	// case 3 standalone  (service + negAnnotation)
+	// case 4 ingress (service + negAnnotation)
+
+	//needNeg = false
+	//ServiceAllPortInfoMap := PortInfoMap
+	//DestinationRulePortInfoMap := PortInfoMap
+	//
+	//processDefaultBackendForNeg() (PortInfoMap, needNeg)
+	//ServiceAllPortInfoMap.Merge(portInfoMap)
+	//needNeg = needNeg || retNeedNeg
+	//
+	//processCsm   (ServicePortInfoMap, DestinationRulePortInfoMap, needNeg)
+	//
+	//processStandalone
+	//
+	//processIngress
+	//
+	//
+	//
+	//
+	//if needNeg
+	//ServiceAllPortInfoMap
+	//DestinationRulePortInfoMap
+	//
+	//EnsureSyncers(allPortInfoMap)
+	//
+	//else
+	//StopSyncers
+	//
+	//syncServiceAnnotation
+	//syncDestinationRuleAnnotation
+
+
+
 	csmPortInfoMap := make(negtypes.PortInfoMap)
 	if c.enableCSM {
 		needNeg = true
@@ -400,6 +437,7 @@ func (c *Controller) processService(key string) error {
 	return c.syncNegStatusAnnotation(namespace, name, make(negtypes.PortInfoMap))
 }
 
+// slipt into process ingress NEG and standalone NEG
 func (c *Controller) mergeIngressPortInfo(negAnnotation *annotations.NegAnnotation, service *apiv1.Service, name types.NamespacedName, portInfoMap *negtypes.PortInfoMap) error {
 	// handle NEGs used by ingress
 	if negAnnotation != nil && negAnnotation.NEGEnabledForIngress() {
@@ -428,7 +466,6 @@ func (c *Controller) mergeIngressPortInfo(negAnnotation *annotations.NegAnnotati
 			return fmt.Errorf("failed to merge service ports exposed as standalone NEGs (%v) into ingress referenced service ports (%v): %v", exposedNegSvcPort, portInfoMap, err)
 		}
 	}
-
 	return nil
 }
 

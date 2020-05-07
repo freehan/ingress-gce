@@ -62,3 +62,19 @@ ${GOPATH}/bin/openapi-gen \
   --input-dirs k8s.io/ingress-gce/pkg/apis/frontendconfig/v1beta1\
   --output-package k8s.io/ingress-gce/pkg/apis/frontendconfig/v1beta1 \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
+
+
+echo "Performing code generation for NetworkEndpointGroup CRD"
+${CODEGEN_PKG}/generate-groups.sh \
+  "deepcopy,client,informer,lister" \
+  k8s.io/ingress-gce/pkg/networkendpointgroup/client k8s.io/ingress-gce/pkg/apis \
+  "networkendpointgroup:v1beta1" \
+  --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt
+
+echo "Generating openapi for NetworkEndpointGroup v1beta1"
+go install ${OPENAPI_PKG}/cmd/openapi-gen
+${GOPATH}/bin/openapi-gen \
+  --output-file-base zz_generated.openapi \
+  --input-dirs k8s.io/ingress-gce/pkg/apis/networkendpointgroup/v1beta1\
+  --output-package k8s.io/ingress-gce/pkg/apis/networkendpointgroup/v1beta1 \
+  --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt

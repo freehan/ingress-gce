@@ -37,6 +37,8 @@ type NegServiceState struct {
 	AsmNeg int
 	// VmIpNeg specifies if a service uses GCE_VM_IP NEG.
 	VmIpNeg *VmIpNegType
+	// CustomNegName specifies if a service uses NEG with custom name.
+	CustomNegName int
 }
 
 // VmIpNegType contains whether a GCE_VM_IP NEG is requesting for

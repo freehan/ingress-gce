@@ -128,6 +128,8 @@ func (s *syncer) init() {
 	s.syncCh = make(chan interface{}, 1)
 }
 
+// consider trying to delete NEG on syncer shutdown
+// report status on GC (e.g. NEG cannot be delete due to what error)
 func (s *syncer) Stop() {
 	s.stateLock.Lock()
 	defer s.stateLock.Unlock()

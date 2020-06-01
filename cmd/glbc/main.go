@@ -124,6 +124,8 @@ func main() {
 			klog.Fatalf("Failed to create FrontendConfig client: %v", err)
 		}
 	}
+	// if EnableNegCrd
+	// EnsureCRD
 
 	namer, err := app.NewNamer(kubeClient, flags.F.ClusterName, firewalls.DefaultFirewallName)
 	if err != nil {

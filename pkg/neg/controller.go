@@ -394,6 +394,7 @@ func (c *Controller) processService(key string) error {
 		return err
 	}
 	negUsage.IngressNeg = len(svcPortInfoMap)
+	// include usage data here.
 	if err := c.mergeStandaloneNEGsPortInfo(service, types.NamespacedName{Namespace: namespace, Name: name}, svcPortInfoMap); err != nil {
 		return err
 	}

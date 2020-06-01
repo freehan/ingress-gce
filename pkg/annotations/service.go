@@ -89,6 +89,7 @@ type NegAnnotation struct {
 // NegAttributes houses the attributes of the NEGs that are associated with the
 // service. Future extensions to the Expose NEGs annotation should be added here.
 type NegAttributes struct {
+	// Validate if this works
 	// Note - in the future, this will be used for custom naming of NEGs.
 	// Currently has no effect.
 	Name string `json:"name,omitempty"`

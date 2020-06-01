@@ -286,6 +286,7 @@ func (im *ControllerMetrics) computeNegMetrics() map[feature]int {
 		vmIpNeg:        0,
 		vmIpNegLocal:   0,
 		vmIpNegCluster: 0,
+		//compute cusomtNegname
 	}
 
 	for key, negState := range im.negMap {

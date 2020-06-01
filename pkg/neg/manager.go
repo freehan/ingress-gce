@@ -96,11 +96,21 @@ func (manager *syncerManager) EnsureSyncers(namespace, name string, newPorts neg
 
 	removes := currentPorts.Difference(newPorts)
 	adds := newPorts.Difference(currentPorts)
+	// Validate if this is still needed. If not remove
 	// There may be duplicate ports in adds and removes due to difference in readinessGate flag
 	// Service/Ingress config changes can cause readinessGate to be turn on or off for the same service port.
 	// By removing the duplicate ports in removes and adds, this prevents disruption of NEG syncer due to the config changes
 	// Hence, Existing NEG syncer for the service port will always work
 	removeCommonPorts(adds, removes)
+
+	// EnsureCRDs
+	// EnsureCreate
+	// EnsureDeleteCRD
+
+	// Corner case sequence: 1: user enables NEG1  2. user do not want NEG1 3. NEG controller mark NEG CR for deletion
+	// 4. user wants NEG1 (NEG CR has deletionTimestamp but user wants it back)
+	// Option 1: we eat the complexity and delete CR and recreate CR while not GC NEG
+	// Option 2: we return error. Must have NEG GCed before recreate.
 
 	manager.svcPortMap[key] = newPorts
 	klog.V(3).Infof("EnsureSyncer %v/%v: syncing %v ports, removing %v ports, adding %v ports", namespace, name, newPorts, removes, adds)
@@ -122,6 +132,7 @@ func (manager *syncerManager) EnsureSyncers(namespace, name string, newPorts neg
 			epc := negsyncer.GetEndpointsCalculator(manager.nodeLister, manager.podLister, manager.zoneGetter,
 				syncerKey, portInfo.RandomizeEndpoints)
 			syncer = negsyncer.NewTransactionSyncer(
+				// need to CR or infer by name
 				syncerKey,
 				portInfo.NegName,
 				manager.recorder,
@@ -210,6 +221,11 @@ func (manager *syncerManager) GC() error {
 	if err := manager.garbageCollectNEG(); err != nil {
 		return fmt.Errorf("failed to garbage collect negs: %v", err)
 	}
+	// have a new NEG GC function to do GC based on NEG CR
+	// A. it needs to handle crash where Service is deleted but NEG CR is still there.
+	// Basically, List all CRs and check if they have a corresponding service.
+	// report status on GC (e.g. NEG cannot be delete due to what error)
+	// B. Consider a ondemand GC along side a periodic GC. Maybe not worth it. Maybe do it along with Syncer stop
 	return nil
 }
 

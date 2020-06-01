@@ -125,6 +125,8 @@ func (s *transactionSyncer) syncInternal() error {
 		if err := s.ensureNetworkEndpointGroups(); err != nil {
 			return err
 		}
+		// report Initialized status to NEG CR
+		// report selfLink stuff to NEG CR status
 	}
 
 	if s.syncer.IsStopped() || s.syncer.IsShuttingDown() {
@@ -187,9 +189,13 @@ func (s *transactionSyncer) syncInternal() error {
 	}
 
 	return s.syncNetworkEndpoints(addEndpoints, removeEndpoints)
+	// consider updating last sync timestamp
+	// maybe consider checking if last sync is due to error retry or endpoint changes.
 }
 
 // ensureNetworkEndpointGroups ensures NEGs are created and configured correctly in the corresponding zones.
+// Need to handle Description
+// Naming collision
 func (s *transactionSyncer) ensureNetworkEndpointGroups() error {
 	var err error
 	zones, err := s.zoneGetter.ListZones()
@@ -278,7 +284,8 @@ func (s *transactionSyncer) operationInternal(operation transactionOp, zone stri
 	if operation == detachOp {
 		err = s.cloud.DetachNetworkEndpoints(s.negName, zone, networkEndpoints, s.NegSyncerKey.GetAPIVersion())
 	}
-
+	// consider reporting status to NEG CR
+	// probably need to report to a aggregated cache and push to status
 	if err == nil {
 		s.recordEvent(apiv1.EventTypeNormal, operation.String(), fmt.Sprintf("%s %d network endpoint(s) (NEG %q in zone %q)", operation.String(), len(networkEndpointMap), s.negName, zone))
 	} else {

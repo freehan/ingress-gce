@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
@@ -169,7 +170,7 @@ const hostRulePrefix = "host"
 // and remove the mapping. When a new path is added to a host (happens
 // more frequently than service deletion) we just need to lookup the 1
 // pathmatcher of the host.
-func ToCompositeURLMap(g *utils.GCEURLMap, namer namer.IngressFrontendNamer, key *meta.Key) *composite.UrlMap {
+func ToCompositeURLMap(g *types.GCEURLMap, namer namer.IngressFrontendNamer, key *meta.Key) *composite.UrlMap {
 	defaultBackendName := g.DefaultBackend.BackendName()
 	key.Name = defaultBackendName
 	resourceID := cloud.ResourceID{ProjectID: "", Resource: "backendServices", Key: key}

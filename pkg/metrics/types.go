@@ -19,14 +19,14 @@ package metrics
 import (
 	"k8s.io/api/networking/v1beta1"
 	frontendconfigv1beta1 "k8s.io/ingress-gce/pkg/apis/frontendconfig/v1beta1"
-	"k8s.io/ingress-gce/pkg/utils"
+	"k8s.io/ingress-gce/pkg/utils/types"
 )
 
 // IngressState defines an ingress and its associated service ports.
 type IngressState struct {
 	ingress        *v1beta1.Ingress
 	frontendconfig *frontendconfigv1beta1.FrontendConfig
-	servicePorts   []utils.ServicePort
+	servicePorts   []types.ServicePort
 }
 
 // NegServiceState contains all the neg usage associated with one service

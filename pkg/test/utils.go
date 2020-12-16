@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"strings"
 	"time"
 
@@ -33,8 +34,8 @@ const (
 
 var (
 	BackendPort      = intstr.IntOrString{Type: intstr.Int, IntVal: 80}
-	DefaultBeSvcPort = utils.ServicePort{
-		ID:       utils.ServicePortID{Service: types.NamespacedName{Namespace: "system", Name: "default"}, Port: BackendPort},
+	DefaultBeSvcPort = types2.ServicePort{
+		ID:       types2.ServicePortID{Service: types.NamespacedName{Namespace: "system", Name: "default"}, Port: BackendPort},
 		NodePort: 30000,
 		Protocol: annotations.ProtocolHTTP,
 	}

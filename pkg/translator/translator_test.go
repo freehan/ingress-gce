@@ -16,6 +16,7 @@ package translator
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 	"testing"
 
@@ -75,32 +76,32 @@ func TestToComputeURLMap(t *testing.T) {
 
 	wantComputeMap := testCompositeURLMap()
 	namer := namer_util.NewNamer("uid1", "fw1")
-	gceURLMap := &utils.GCEURLMap{
-		DefaultBackend: &utils.ServicePort{NodePort: 30000, BackendNamer: namer},
-		HostRules: []utils.HostRule{
+	gceURLMap := &types.GCEURLMap{
+		DefaultBackend: &types.ServicePort{NodePort: 30000, BackendNamer: namer},
+		HostRules: []types.HostRule{
 			{
 				Hostname: "abc.com",
-				Paths: []utils.PathRule{
+				Paths: []types.PathRule{
 					{
 						Path:    "/web",
-						Backend: utils.ServicePort{NodePort: 32000, BackendNamer: namer},
+						Backend: types.ServicePort{NodePort: 32000, BackendNamer: namer},
 					},
 					{
 						Path:    "/other",
-						Backend: utils.ServicePort{NodePort: 32500, BackendNamer: namer},
+						Backend: types.ServicePort{NodePort: 32500, BackendNamer: namer},
 					},
 				},
 			},
 			{
 				Hostname: "foo.bar.com",
-				Paths: []utils.PathRule{
+				Paths: []types.PathRule{
 					{
 						Path:    "/",
-						Backend: utils.ServicePort{NodePort: 33000, BackendNamer: namer},
+						Backend: types.ServicePort{NodePort: 33000, BackendNamer: namer},
 					},
 					{
 						Path:    "/*",
-						Backend: utils.ServicePort{NodePort: 33500, BackendNamer: namer},
+						Backend: types.ServicePort{NodePort: 33500, BackendNamer: namer},
 					},
 				},
 			},

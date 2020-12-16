@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/neg/types"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"strings"
 
@@ -32,8 +34,6 @@ import (
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/filter"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
-
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 const (
@@ -236,7 +236,7 @@ func (g *GCLB) CheckResourceDeletion(ctx context.Context, c cloud.Cloud, options
 				}
 			} else {
 				if options != nil && options.SkipDefaultBackend {
-					desc := utils.DescriptionFromString(bs.Description)
+					desc := types2.DescriptionFromString(bs.Description)
 					if desc.ServiceName == fmt.Sprintf("%s/%s", kubeSystemNS, defaultHTTPBackend) {
 						continue
 					}
@@ -975,7 +975,7 @@ func CheckStandaloneNEGDeletion(ctx context.Context, c cloud.Cloud, negName, por
 		}
 
 		if neg.Description != "" {
-			desc, err := utils.NegDescriptionFromString(neg.Description)
+			desc, err := types.NegDescriptionFromString(neg.Description)
 			if err == nil && desc.Port != port {
 				continue
 			}

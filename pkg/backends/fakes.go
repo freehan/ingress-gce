@@ -18,22 +18,21 @@ package backends
 
 import (
 	api_v1 "k8s.io/api/core/v1"
-
-	"k8s.io/ingress-gce/pkg/utils"
+	"k8s.io/ingress-gce/pkg/utils/types"
 )
 
 // FakeProbeProvider implements the probeProvider interface for tests.
 type FakeProbeProvider struct {
-	probes map[utils.ServicePort]*api_v1.Probe
+	probes map[types.ServicePort]*api_v1.Probe
 }
 
 // NewFakeProbeProvider returns a struct which satisfies probeProvider interface
-func NewFakeProbeProvider(probes map[utils.ServicePort]*api_v1.Probe) *FakeProbeProvider {
+func NewFakeProbeProvider(probes map[types.ServicePort]*api_v1.Probe) *FakeProbeProvider {
 	return &FakeProbeProvider{probes}
 }
 
 // GetProbe returns the probe for a given nodePort
-func (pp *FakeProbeProvider) GetProbe(port utils.ServicePort) (*api_v1.Probe, error) {
+func (pp *FakeProbeProvider) GetProbe(port types.ServicePort) (*api_v1.Probe, error) {
 	if probe, exists := pp.probes[port]; exists && probe.HTTPGet != nil {
 		return probe, nil
 	}

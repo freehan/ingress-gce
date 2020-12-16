@@ -18,6 +18,7 @@ package controller
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"reflect"
 	"sync"
@@ -412,7 +413,7 @@ func (lbc *LoadBalancerController) SyncBackends(state interface{}) error {
 }
 
 // syncInstanceGroup creates instance groups, syncs instances, sets named ports and updates instance group annotation
-func (lbc *LoadBalancerController) syncInstanceGroup(ing *v1beta1.Ingress, ingSvcPorts []utils.ServicePort) error {
+func (lbc *LoadBalancerController) syncInstanceGroup(ing *v1beta1.Ingress, ingSvcPorts []types.ServicePort) error {
 	nodePorts := nodePorts(ingSvcPorts)
 	klog.V(2).Infof("Syncing Instance Group for ingress %v/%v with nodeports %v", ing.Namespace, ing.Name, nodePorts)
 	igs, err := lbc.instancePool.EnsureInstanceGroupsAndPorts(lbc.ctx.ClusterNamer.InstanceGroup(), nodePorts)
@@ -673,7 +674,7 @@ func (lbc *LoadBalancerController) updateIngressStatus(l7 *loadbalancers.L7, ing
 }
 
 // toRuntimeInfo returns L7RuntimeInfo for the given ingress.
-func (lbc *LoadBalancerController) toRuntimeInfo(ing *v1beta1.Ingress, urlMap *utils.GCEURLMap) (*loadbalancers.L7RuntimeInfo, error) {
+func (lbc *LoadBalancerController) toRuntimeInfo(ing *v1beta1.Ingress, urlMap *types.GCEURLMap) (*loadbalancers.L7RuntimeInfo, error) {
 	annotations := annotations.FromIngress(ing)
 	env, err := translator.NewEnv(ing, lbc.ctx.KubeClient, "", "", "")
 	if err != nil {
@@ -735,8 +736,8 @@ func updateAnnotations(client kubernetes.Interface, ing *v1beta1.Ingress, newAnn
 
 // ToSvcPorts returns a list of SVC ports given a list of ingresses.
 // Note: This method is used for GC.
-func (lbc *LoadBalancerController) ToSvcPorts(ings []*v1beta1.Ingress) []utils.ServicePort {
-	var knownPorts []utils.ServicePort
+func (lbc *LoadBalancerController) ToSvcPorts(ings []*v1beta1.Ingress) []types.ServicePort {
+	var knownPorts []types.ServicePort
 	for _, ing := range ings {
 		urlMap, _ := lbc.Translator.TranslateIngress(ing, lbc.ctx.DefaultBackendSvcPort.ID, lbc.ctx.ClusterNamer)
 		knownPorts = append(knownPorts, urlMap.AllServicePorts()...)

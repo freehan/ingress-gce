@@ -18,16 +18,16 @@ package features
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
 // EnsureLogging reads the log configurations specified in the ServicePort.BackendConfig
 // and applies it to the BackendService. It returns true if there were existing settings
 // on the BackendService that were overwritten.
-func EnsureLogging(sp utils.ServicePort, be *composite.BackendService) bool {
+func EnsureLogging(sp types.ServicePort, be *composite.BackendService) bool {
 	if sp.BackendConfig.Spec.Logging == nil {
 		return false
 	}
@@ -50,7 +50,7 @@ func EnsureLogging(sp utils.ServicePort, be *composite.BackendService) bool {
 // the access log settings specified in the BackendConfig to the passed in
 // service port.
 // This method assumes that sp.BackendConfig.Spec.Logging is not nil.
-func expectedBackendServiceLogConfig(sp utils.ServicePort) *composite.BackendServiceLogConfig {
+func expectedBackendServiceLogConfig(sp types.ServicePort) *composite.BackendServiceLogConfig {
 	logConfig := &composite.BackendServiceLogConfig{
 		Enable: sp.BackendConfig.Spec.Logging.Enable,
 	}

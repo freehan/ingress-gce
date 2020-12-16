@@ -17,11 +17,11 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 var testTTL = int64(10)
@@ -29,13 +29,13 @@ var testTTL = int64(10)
 func TestEnsureAffinity(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		sp             utils.ServicePort
+		sp             types.ServicePort
 		be             *composite.BackendService
 		updateExpected bool
 	}{
 		{
 			desc: "affinity settings missing from spec, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{},
 				},
@@ -48,7 +48,7 @@ func TestEnsureAffinity(t *testing.T) {
 		},
 		{
 			desc: "sessionaffinity setting differing, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						SessionAffinity: &backendconfigv1.SessionAffinityConfig{
@@ -64,7 +64,7 @@ func TestEnsureAffinity(t *testing.T) {
 		},
 		{
 			desc: "affinity ttl setting differing, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						SessionAffinity: &backendconfigv1.SessionAffinityConfig{
@@ -80,7 +80,7 @@ func TestEnsureAffinity(t *testing.T) {
 		},
 		{
 			desc: "sessionaffinity and ttl settings differing, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						SessionAffinity: &backendconfigv1.SessionAffinityConfig{
@@ -98,7 +98,7 @@ func TestEnsureAffinity(t *testing.T) {
 		},
 		{
 			desc: "affinity settings identical, no updated needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						SessionAffinity: &backendconfigv1.SessionAffinityConfig{

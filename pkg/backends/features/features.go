@@ -17,13 +17,13 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"sort"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"k8s.io/ingress-gce/pkg/annotations"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 const (
@@ -53,13 +53,13 @@ var (
 )
 
 // SetDescription sets the XFeatures field for the given Description.
-func SetDescription(desc *utils.Description, sp *utils.ServicePort) {
+func SetDescription(desc *types.Description, sp *types.ServicePort) {
 	desc.XFeatures = featuresFromServicePort(sp)
 }
 
 // featuresFromServicePort returns a list of features used by the
 // given ServicePort that required non-GA API.
-func featuresFromServicePort(sp *utils.ServicePort) []string {
+func featuresFromServicePort(sp *types.ServicePort) []string {
 	features := []string{}
 	if sp.Protocol == annotations.ProtocolHTTP2 {
 		features = append(features, FeatureHTTP2)
@@ -83,21 +83,21 @@ func featuresFromServicePort(sp *utils.ServicePort) []string {
 
 // VersionFromServicePort returns the meta.Version for the backend that this ServicePort is
 // associated with.
-func VersionFromServicePort(sp *utils.ServicePort) meta.Version {
+func VersionFromServicePort(sp *types.ServicePort) meta.Version {
 	return VersionFromFeatures(featuresFromServicePort(sp))
 }
 
 // ScopeFromServicePort returns the meta.KeyType for the backend that this ServicePort
 // is associated with
 // TODO: (shance) refactor all scope to be above the serviceport level
-func ScopeFromServicePort(sp *utils.ServicePort) meta.KeyType {
+func ScopeFromServicePort(sp *types.ServicePort) meta.KeyType {
 	return ScopeFromFeatures(featuresFromServicePort(sp))
 }
 
 // VersionFromDescription returns the meta.Version required for the given
 // description.
 func VersionFromDescription(desc string) meta.Version {
-	return VersionFromFeatures(utils.DescriptionFromString(desc).XFeatures)
+	return VersionFromFeatures(types.DescriptionFromString(desc).XFeatures)
 }
 
 // VersionFromFeatures returns the meta.Version required for the given

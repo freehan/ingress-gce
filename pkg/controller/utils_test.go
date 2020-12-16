@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 	"time"
 
@@ -29,7 +30,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/ingress-gce/pkg/annotations"
-	"k8s.io/ingress-gce/pkg/utils"
 	"reflect"
 )
 
@@ -206,77 +206,77 @@ func TestNodeStatusChanged(t *testing.T) {
 func TestUniq(t *testing.T) {
 	testCases := []struct {
 		desc   string
-		input  []utils.ServicePort
-		expect []utils.ServicePort
+		input  []types2.ServicePort
+		expect []types2.ServicePort
 	}{
 		{
 			"Empty",
-			[]utils.ServicePort{},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
+			[]types2.ServicePort{},
 		},
 		{
 			"Two service ports",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, true),
 				testServicePort("ns", "name", "443", 443, 30443, true),
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, true),
 				testServicePort("ns", "name", "443", 443, 30443, true),
 			},
 		},
 		{
 			"Two service ports with different names",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name1", "80", 80, 30080, true),
 				testServicePort("ns", "name2", "80", 80, 30880, true),
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name1", "80", 80, 30080, true),
 				testServicePort("ns", "name2", "80", 80, 30880, true),
 			},
 		},
 		{
 			"Two duplicate service ports",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, true),
 				testServicePort("ns", "name", "80", 80, 30080, true),
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, true),
 			},
 		},
 		{
 			"Two services without nodeports",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 0, true),
 				testServicePort("ns", "name", "443", 443, 0, true),
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 0, true),
 				testServicePort("ns", "name", "443", 443, 0, true),
 			},
 		},
 		{
 			"2 out of 3 are duplicates",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 0, true),
 				testServicePort("ns", "name", "443", 443, 0, true),
 				testServicePort("ns", "name", "443", 443, 0, true),
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 0, true),
 				testServicePort("ns", "name", "443", 443, 0, true),
 			},
 		},
 		{
 			"mix of named port and port number references",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "http", 80, 0, true),
 				testServicePort("ns", "name", "https", 443, 0, true),
 				testServicePort("ns", "name", "443", 443, 0, true),
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "http", 80, 0, true),
 				testServicePort("ns", "name", "443", 443, 0, true),
 			},
@@ -306,17 +306,17 @@ func TestUniq(t *testing.T) {
 func TestGetNodePortsUsedByIngress(t *testing.T) {
 	testCases := []struct {
 		desc        string
-		svcPorts    []utils.ServicePort
+		svcPorts    []types2.ServicePort
 		expectPorts []int64
 	}{
 		{
 			"empty input",
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			[]int64{},
 		},
 		{
 			" all NEG enabled",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, true),
 				testServicePort("ns", "name", "443", 443, 30443, true),
 			},
@@ -324,7 +324,7 @@ func TestGetNodePortsUsedByIngress(t *testing.T) {
 		},
 		{
 			" all nonNEG enabled",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, false),
 				testServicePort("ns", "name", "443", 443, 30443, false),
 			},
@@ -332,7 +332,7 @@ func TestGetNodePortsUsedByIngress(t *testing.T) {
 		},
 		{
 			" mixed SvcPorts",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, false),
 				testServicePort("ns", "name", "443", 443, 30443, true),
 			},
@@ -340,7 +340,7 @@ func TestGetNodePortsUsedByIngress(t *testing.T) {
 		},
 		{
 			" mixed SvcPorts with duplicates",
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				testServicePort("ns", "name", "80", 80, 30080, false),
 				testServicePort("ns", "name", "80", 80, 30080, false),
 				testServicePort("ns", "name", "443", 443, 30443, false),
@@ -392,9 +392,9 @@ func testNode() *api_v1.Node {
 	}
 }
 
-func testServicePort(namespace, name, port string, servicePort, nodePort int, enableNEG bool) utils.ServicePort {
-	return utils.ServicePort{
-		ID: utils.ServicePortID{
+func testServicePort(namespace, name, port string, servicePort, nodePort int, enableNEG bool) types2.ServicePort {
+	return types2.ServicePort{
+		ID: types2.ServicePortID{
 			Service: types.NamespacedName{
 				Namespace: namespace,
 				Name:      name,

@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 	"testing"
 
@@ -30,7 +31,6 @@ import (
 	"k8s.io/ingress-gce/pkg/e2e/adapter"
 	"k8s.io/ingress-gce/pkg/fuzz"
 	"k8s.io/ingress-gce/pkg/fuzz/features"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 // TODO(rramkumar): Add transition test.
@@ -117,7 +117,7 @@ func TestCustomRequestHeaders(t *testing.T) {
 func verifyHeaders(t *testing.T, gclb *fuzz.GCLB, svcNamespace, svcName string, expectedCustomRequestHeaders *backendconfig.CustomRequestHeadersConfig) error {
 	numBsWithCRH := 0
 	for _, bs := range gclb.BackendService {
-		desc := utils.DescriptionFromString(bs.GA.Description)
+		desc := types.DescriptionFromString(bs.GA.Description)
 		if desc.ServiceName != fmt.Sprintf("%s/%s", svcNamespace, svcName) {
 			continue
 		}

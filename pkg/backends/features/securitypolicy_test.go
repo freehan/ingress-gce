@@ -19,6 +19,7 @@ package features
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"sync"
 	"testing"
 
@@ -128,7 +129,7 @@ func TestEnsureSecurityPolicy(t *testing.T) {
 
 			(fakeGCE.Compute().(*cloud.MockGCE)).MockBetaBackendServices.SetSecurityPolicyHook = setSecurityPolicyHook
 
-			if err := EnsureSecurityPolicy(fakeGCE, utils.ServicePort{BackendConfig: tc.desiredConfig}, tc.currentBackendService, fakeBeName); err != nil {
+			if err := EnsureSecurityPolicy(fakeGCE, types.ServicePort{BackendConfig: tc.desiredConfig}, tc.currentBackendService, fakeBeName); err != nil {
 				t.Errorf("EnsureSecurityPolicy()=%v, want nil", err)
 			}
 

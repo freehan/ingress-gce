@@ -18,7 +18,7 @@ import (
 	befeatures "k8s.io/ingress-gce/pkg/backends/features"
 	"k8s.io/ingress-gce/pkg/composite"
 	"k8s.io/ingress-gce/pkg/neg/types"
-	"k8s.io/ingress-gce/pkg/utils"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"k8s.io/klog"
 	"k8s.io/legacy-cloud-providers/gce"
 )
@@ -45,7 +45,7 @@ func NewNEGLinker(
 }
 
 // Link implements Link.
-func (l *negLinker) Link(sp utils.ServicePort, groups []GroupKey) error {
+func (l *negLinker) Link(sp types2.ServicePort, groups []GroupKey) error {
 	version := befeatures.VersionFromServicePort(&sp)
 	var negs []*composite.NetworkEndpointGroup
 	var err error

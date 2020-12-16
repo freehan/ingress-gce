@@ -460,7 +460,7 @@ func (manager *syncerManager) garbageCollectNEGWithCRD() error {
 	// occurs, it will report an error as an event on the given CR. If an error does occur, false will
 	// be returned to indicate that the CR should not be deleted.
 	deleteNegOrReportErr := func(name, zone string, cr *negv1beta1.ServiceNetworkEndpointGroup) bool {
-		expectedDesc := &utils.NegDescription{
+		expectedDesc := &negtypes.NegDescription{
 			ClusterUID:  string(manager.kubeSystemUID),
 			Namespace:   cr.Namespace,
 			ServiceName: cr.GetLabels()[negtypes.NegCRServiceNameKey],
@@ -530,14 +530,14 @@ func (manager *syncerManager) garbageCollectNEGWithCRD() error {
 }
 
 // ensureDeleteNetworkEndpointGroup ensures neg is delete from zone
-func (manager *syncerManager) ensureDeleteNetworkEndpointGroup(name, zone string, expectedDesc *utils.NegDescription) error {
+func (manager *syncerManager) ensureDeleteNetworkEndpointGroup(name, zone string, expectedDesc *negtypes.NegDescription) error {
 	neg, err := manager.cloud.GetNetworkEndpointGroup(name, zone, meta.VersionGA)
 	if err != nil {
 		return utils.IgnoreHTTPNotFound(err)
 	}
 
 	if expectedDesc != nil {
-		if matches, err := utils.VerifyDescription(*expectedDesc, neg.Description, name, zone); !matches {
+		if matches, err := negtypes.VerifyDescription(*expectedDesc, neg.Description, name, zone); !matches {
 			klog.V(2).Infof("Skipping deletion of Neg %s in %s because of conflicting description: %s", name, zone, err)
 			return nil
 		}

@@ -18,6 +18,7 @@ package firewalls
 
 import (
 	context2 "context"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 	"time"
 
@@ -111,18 +112,18 @@ func TestGetCustomHealthCheckPorts(t *testing.T) {
 
 	testCases := []struct {
 		desc     string
-		svcPorts []utils.ServicePort
+		svcPorts []types2.ServicePort
 		expect   []string
 	}{
 		{
 			desc:     "One service port with custom port",
-			svcPorts: []utils.ServicePort{utils.ServicePort{BackendConfig: &v1.BackendConfig{Spec: v1.BackendConfigSpec{HealthCheck: &v1.HealthCheckConfig{Port: utils.NewInt64Pointer(8000)}}}}},
+			svcPorts: []types2.ServicePort{types2.ServicePort{BackendConfig: &v1.BackendConfig{Spec: v1.BackendConfigSpec{HealthCheck: &v1.HealthCheckConfig{Port: utils.NewInt64Pointer(8000)}}}}},
 			expect:   []string{"8000"},
 		},
 		{
 			desc: "Two service ports with custom port",
-			svcPorts: []utils.ServicePort{utils.ServicePort{BackendConfig: &v1.BackendConfig{Spec: v1.BackendConfigSpec{HealthCheck: &v1.HealthCheckConfig{Port: utils.NewInt64Pointer(8000)}}}},
-				utils.ServicePort{BackendConfig: &v1.BackendConfig{Spec: v1.BackendConfigSpec{HealthCheck: &v1.HealthCheckConfig{Port: utils.NewInt64Pointer(9000)}}}}},
+			svcPorts: []types2.ServicePort{types2.ServicePort{BackendConfig: &v1.BackendConfig{Spec: v1.BackendConfigSpec{HealthCheck: &v1.HealthCheckConfig{Port: utils.NewInt64Pointer(8000)}}}},
+				types2.ServicePort{BackendConfig: &v1.BackendConfig{Spec: v1.BackendConfigSpec{HealthCheck: &v1.HealthCheckConfig{Port: utils.NewInt64Pointer(9000)}}}}},
 			expect: []string{"8000", "9000"},
 		},
 		{

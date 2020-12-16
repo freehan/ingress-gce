@@ -19,23 +19,23 @@ package features
 import (
 	"crypto/sha256"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 func TestEnsureIAP(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		sp             utils.ServicePort
+		sp             types.ServicePort
 		be             *composite.BackendService
 		updateExpected bool
 	}{
 		{
 			desc: "iap settings are missing from spec, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Iap: nil,
@@ -53,7 +53,7 @@ func TestEnsureIAP(t *testing.T) {
 		},
 		{
 			desc: "settings are identical, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Iap: &backendconfigv1.IAPConfig{
@@ -77,7 +77,7 @@ func TestEnsureIAP(t *testing.T) {
 		},
 		{
 			desc: "no existing settings, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Iap: &backendconfigv1.IAPConfig{
@@ -97,7 +97,7 @@ func TestEnsureIAP(t *testing.T) {
 		},
 		{
 			desc: "client id is different, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Iap: &backendconfigv1.IAPConfig{
@@ -121,7 +121,7 @@ func TestEnsureIAP(t *testing.T) {
 		},
 		{
 			desc: "client secret is different, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Iap: &backendconfigv1.IAPConfig{
@@ -145,7 +145,7 @@ func TestEnsureIAP(t *testing.T) {
 		},
 		{
 			desc: "enabled setting is different, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Iap: &backendconfigv1.IAPConfig{

@@ -19,6 +19,8 @@ package neg
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/timetracker"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"time"
 
 	istioV1alpha3 "istio.io/api/networking/v1alpha3"
@@ -39,8 +41,6 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/cloud-provider/service/helpers"
 	"k8s.io/ingress-gce/pkg/annotations"
-	"k8s.io/ingress-gce/pkg/controller/translator"
-	"k8s.io/ingress-gce/pkg/flags"
 	usage "k8s.io/ingress-gce/pkg/metrics"
 	"k8s.io/ingress-gce/pkg/neg/metrics"
 	"k8s.io/ingress-gce/pkg/neg/readiness"
@@ -50,6 +50,7 @@ import (
 	"k8s.io/ingress-gce/pkg/utils/common"
 	namer2 "k8s.io/ingress-gce/pkg/utils/namer"
 	"k8s.io/ingress-gce/pkg/utils/patch"
+	"k8s.io/ingress-gce/pkg/utils/shared"
 	"k8s.io/klog"
 )
 
@@ -73,7 +74,7 @@ type Controller struct {
 	ingressLister               cache.Indexer
 	serviceLister               cache.Indexer
 	client                      kubernetes.Interface
-	defaultBackendService       utils.ServicePort
+	defaultBackendService       types2.ServicePort
 	destinationRuleLister       cache.Indexer
 	destinationRuleClient       dynamic.NamespaceableResourceInterface
 	enableASM                   bool
@@ -90,9 +91,9 @@ type Controller struct {
 	destinationRuleQueue workqueue.RateLimitingInterface
 
 	// syncTracker tracks the latest time that service and endpoint changes are processed
-	syncTracker utils.TimeTracker
+	syncTracker timetracker.TimeTracker
 	// nodeSyncTracker tracks the latest time that node changes are processed
-	nodeSyncTracker utils.TimeTracker
+	nodeSyncTracker timetracker.TimeTracker
 
 	// reflector handles NEG readiness gate and conditions for pods in NEG.
 	reflector readiness.Reflector
@@ -120,7 +121,7 @@ func NewController(
 	hasSynced func() bool,
 	controllerMetrics *usage.ControllerMetrics,
 	l4Namer namer2.L4ResourcesNamer,
-	defaultBackendService utils.ServicePort,
+	defaultBackendService types2.ServicePort,
 	cloud negtypes.NetworkEndpointGroupCloud,
 	zoneGetter negtypes.ZoneGetter,
 	namer negtypes.NetworkEndpointGroupNamer,
@@ -184,7 +185,7 @@ func NewController(
 		serviceQueue:          workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		endpointQueue:         workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		nodeQueue:             workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		syncTracker:           utils.NewTimeTracker(),
+		syncTracker:           timetracker.NewTimeTracker(),
 		reflector:             reflector,
 		collector:             controllerMetrics,
 		runL4:                 runL4Controller,
@@ -578,11 +579,10 @@ func (c *Controller) mergeDefaultBackendServicePortInfoMap(key string, service *
 	}
 
 	// process default backend service for L7 ILB
-	if flags.F.EnableL7Ilb {
-		if err := scanIngress(utils.IsGCEL7ILBIngress); err != nil {
+	if err := scanIngress(utils.IsGCEL7ILBIngress); err != nil {
 			return err
 		}
-	}
+
 
 	// process default backend service for L7 XLB
 	negAnnotation, foundNEGAnnotation, err := annotations.FromService(service).NEGAnnotation()
@@ -771,7 +771,7 @@ func (c *Controller) enqueueIngressServices(ing *v1beta1.Ingress) {
 	}
 
 	// enqueue default backend service
-	if flags.F.EnableL7Ilb && ing.Spec.Backend == nil {
+	if ing.Spec.Backend == nil {
 		c.enqueueService(cache.ExplicitKey(c.defaultBackendService.ID.Service.String()))
 	}
 }
@@ -804,9 +804,9 @@ func gatherPortMappingUsedByIngress(ings []v1beta1.Ingress, svc *apiv1.Service) 
 	ingressSvcPortTuples := make(negtypes.SvcPortTupleSet)
 	for _, ing := range ings {
 		if utils.IsGLBCIngress(&ing) {
-			utils.TraverseIngressBackends(&ing, func(id utils.ServicePortID) bool {
+			utils.TraverseIngressBackends(&ing, func(id types2.ServicePortID) bool {
 				if id.Service.Name == svc.Name && id.Service.Namespace == svc.Namespace {
-					servicePort := translator.ServicePort(*svc, id.Port)
+					servicePort := shared.ServicePort(*svc, id.Port)
 					if servicePort == nil {
 						klog.Warningf("Port %+v in Service %q not found", id.Port, id.Service.String())
 						return false
@@ -830,7 +830,7 @@ func gatherIngressServiceKeys(ing *v1beta1.Ingress) sets.String {
 	if ing == nil {
 		return set
 	}
-	utils.TraverseIngressBackends(ing, func(id utils.ServicePortID) bool {
+	utils.TraverseIngressBackends(ing, func(id types2.ServicePortID) bool {
 		set.Insert(utils.ServiceKeyFunc(id.Service.Namespace, id.Service.Name))
 		return false
 	})
@@ -845,7 +845,7 @@ func getIngressServicesFromStore(store cache.Store, svc *apiv1.Service) (ings []
 		}
 
 		if utils.IsGLBCIngress(&ing) {
-			utils.TraverseIngressBackends(&ing, func(id utils.ServicePortID) bool {
+			utils.TraverseIngressBackends(&ing, func(id types2.ServicePortID) bool {
 				if id.Service.Name == svc.Name {
 					ings = append(ings, ing)
 					return true

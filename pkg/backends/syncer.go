@@ -15,6 +15,7 @@ package backends
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"strings"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
@@ -58,7 +59,7 @@ func (s *backendSyncer) Init(pp ProbeProvider) {
 }
 
 // Sync implements Syncer.
-func (s *backendSyncer) Sync(svcPorts []utils.ServicePort) error {
+func (s *backendSyncer) Sync(svcPorts []types.ServicePort) error {
 	for _, sp := range svcPorts {
 		klog.V(3).Infof("Sync: backend %+v", sp)
 		if err := s.ensureBackendService(sp); err != nil {
@@ -69,7 +70,7 @@ func (s *backendSyncer) Sync(svcPorts []utils.ServicePort) error {
 }
 
 // ensureBackendService will update or create a BackendService for the given port.
-func (s *backendSyncer) ensureBackendService(sp utils.ServicePort) error {
+func (s *backendSyncer) ensureBackendService(sp types.ServicePort) error {
 	// We must track the ports even if creating the backends failed, because
 	// we might've created health-check for them.
 	be := &composite.BackendService{}
@@ -128,7 +129,7 @@ func (s *backendSyncer) ensureBackendService(sp utils.ServicePort) error {
 }
 
 // GC implements Syncer.
-func (s *backendSyncer) GC(svcPorts []utils.ServicePort) error {
+func (s *backendSyncer) GC(svcPorts []types.ServicePort) error {
 	knownPorts, err := knownPortsFromServicePorts(s.cloud, svcPorts)
 	if err != nil {
 		return err
@@ -204,7 +205,7 @@ func (s *backendSyncer) gc(backends []*composite.BackendService, knownPorts sets
 }
 
 // TODO: (shance) add unit tests
-func knownPortsFromServicePorts(cloud *gce.Cloud, svcPorts []utils.ServicePort) (sets.String, error) {
+func knownPortsFromServicePorts(cloud *gce.Cloud, svcPorts []types.ServicePort) (sets.String, error) {
 	knownPorts := sets.NewString()
 
 	for _, sp := range svcPorts {
@@ -227,13 +228,13 @@ func (s *backendSyncer) Status(name string, version meta.Version, scope meta.Key
 
 // Shutdown implements Syncer.
 func (s *backendSyncer) Shutdown() error {
-	if err := s.GC([]utils.ServicePort{}); err != nil {
+	if err := s.GC([]types.ServicePort{}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *backendSyncer) ensureHealthCheck(sp utils.ServicePort) (string, error) {
+func (s *backendSyncer) ensureHealthCheck(sp types.ServicePort) (string, error) {
 	var probe *v1.Probe
 	var err error
 
@@ -255,7 +256,7 @@ func getHealthCheckLink(be *composite.BackendService) string {
 }
 
 // ensureProtocol updates the BackendService Protocol with the expected value
-func ensureProtocol(be *composite.BackendService, p utils.ServicePort) (needsUpdate bool) {
+func ensureProtocol(be *composite.BackendService, p types.ServicePort) (needsUpdate bool) {
 	if be.Protocol == string(p.Protocol) {
 		return false
 	}

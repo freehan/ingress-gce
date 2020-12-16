@@ -19,6 +19,7 @@ package firewalls
 import (
 	"errors"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 	"strconv"
 	"time"
@@ -125,8 +126,8 @@ func NewFirewallController(
 // ToSvcPorts is a helper method over translator.TranslateIngress to process a list of ingresses.
 // TODO(rramkumar): This is a copy of code in controller.go. Extract this into
 // something shared.
-func (fwc *FirewallController) ToSvcPorts(ings []*v1beta1.Ingress) []utils.ServicePort {
-	var knownPorts []utils.ServicePort
+func (fwc *FirewallController) ToSvcPorts(ings []*v1beta1.Ingress) []types.ServicePort {
+	var knownPorts []types.ServicePort
 	for _, ing := range ings {
 		urlMap, _ := fwc.translator.TranslateIngress(ing, fwc.ctx.DefaultBackendSvcPort.ID, fwc.ctx.ClusterNamer)
 		knownPorts = append(knownPorts, urlMap.AllServicePorts()...)
@@ -236,7 +237,7 @@ func (fwc *FirewallController) ilbFirewallSrcRange(gceIngresses []*v1beta1.Ingre
 	return "", ErrNoILBIngress
 }
 
-func (fwc *FirewallController) getCustomHealthCheckPorts(svcPorts []utils.ServicePort) []string {
+func (fwc *FirewallController) getCustomHealthCheckPorts(svcPorts []types.ServicePort) []string {
 	var result []string
 
 	for _, svcPort := range svcPorts {

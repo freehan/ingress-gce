@@ -17,6 +17,7 @@ limitations under the License.
 package loadbalancers
 
 import (
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"strconv"
 	"strings"
 	"sync"
@@ -50,7 +51,7 @@ type L4 struct {
 	// recorder is used to generate k8s Events.
 	recorder            record.EventRecorder
 	Service             *corev1.Service
-	ServicePort         utils.ServicePort
+	ServicePort         types2.ServicePort
 	NamespacedName      types.NamespacedName
 	sharedResourcesLock *sync.Mutex
 }
@@ -67,7 +68,7 @@ func NewL4Handler(service *corev1.Service, cloud *gce.Cloud, scope meta.KeyType,
 	l := &L4{cloud: cloud, scope: scope, namer: namer, recorder: recorder, Service: service, sharedResourcesLock: lock}
 	l.NamespacedName = types.NamespacedName{Name: service.Name, Namespace: service.Namespace}
 	l.backendPool = backends.NewPool(l.cloud, l.namer)
-	l.ServicePort = utils.ServicePort{ID: utils.ServicePortID{Service: l.NamespacedName}, BackendNamer: l.namer,
+	l.ServicePort = types2.ServicePort{ID: types2.ServicePortID{Service: l.NamespacedName}, BackendNamer: l.namer,
 		VMIPNEGEnabled: true}
 	return l
 }

@@ -19,6 +19,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 	"time"
 
@@ -381,7 +382,7 @@ func TestTraverseIngressBackends(t *testing.T) {
 
 	for _, tc := range testCases {
 		counter := 0
-		TraverseIngressBackends(tc.ing, func(id ServicePortID) bool {
+		TraverseIngressBackends(tc.ing, func(id types2.ServicePortID) bool {
 			if tc.expectBackends[counter].ServiceName != id.Service.Name || tc.expectBackends[counter].ServicePort != id.Port {
 				t.Errorf("Test case %q, for backend %v, expecting service name %q and service port %q, but got %q, %q", tc.desc, counter, tc.expectBackends[counter].ServiceName, tc.expectBackends[counter].ServicePort.String(), id.Service.Name, id.Port.String())
 			}

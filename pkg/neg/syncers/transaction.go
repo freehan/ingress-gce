@@ -40,7 +40,6 @@ import (
 	svcnegclient "k8s.io/ingress-gce/pkg/svcneg/client/clientset/versioned"
 	"k8s.io/ingress-gce/pkg/utils/patch"
 	"k8s.io/klog"
-	"k8s.io/kubernetes/pkg/apis/core"
 )
 
 type transactionSyncer struct {
@@ -575,7 +574,7 @@ func getSyncedCondition(err error) negv1beta1.Condition {
 	if err != nil {
 		return negv1beta1.Condition{
 			Type:               negv1beta1.Synced,
-			Status:             core.ConditionFalse,
+			Status:             apiv1.ConditionFalse,
 			Reason:             negtypes.NegSyncFailed,
 			LastTransitionTime: metav1.Now(),
 			Message:            err.Error(),
@@ -584,7 +583,7 @@ func getSyncedCondition(err error) negv1beta1.Condition {
 
 	return negv1beta1.Condition{
 		Type:               negv1beta1.Synced,
-		Status:             core.ConditionTrue,
+		Status:             apiv1.ConditionTrue,
 		Reason:             negtypes.NegSyncSuccessful,
 		LastTransitionTime: metav1.Now(),
 	}
@@ -595,7 +594,7 @@ func getInitializedCondition(err error) negv1beta1.Condition {
 	if err != nil {
 		return negv1beta1.Condition{
 			Type:               negv1beta1.Initialized,
-			Status:             core.ConditionFalse,
+			Status:             apiv1.ConditionFalse,
 			Reason:             negtypes.NegInitializationFailed,
 			LastTransitionTime: metav1.Now(),
 			Message:            err.Error(),
@@ -604,7 +603,7 @@ func getInitializedCondition(err error) negv1beta1.Condition {
 
 	return negv1beta1.Condition{
 		Type:               negv1beta1.Initialized,
-		Status:             core.ConditionTrue,
+		Status:             apiv1.ConditionTrue,
 		Reason:             negtypes.NegInitializationSuccessful,
 		LastTransitionTime: metav1.Now(),
 	}

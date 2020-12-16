@@ -14,6 +14,7 @@ limitations under the License.
 package backends
 
 import (
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"strings"
 	"testing"
 
@@ -25,7 +26,6 @@ import (
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/mock"
 	"k8s.io/apimachinery/pkg/types"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/legacy-cloud-providers/gce"
 )
 
@@ -51,13 +51,13 @@ func TestLinkBackendServiceToNEG(t *testing.T) {
 	namespace, name, port := "ns", "name", "port"
 	svc := types.NamespacedName{Namespace: namespace, Name: name}
 
-	for _, svcPort := range []utils.ServicePort{
-		utils.ServicePort{
-			ID:             utils.ServicePortID{Service: svc},
+	for _, svcPort := range []types2.ServicePort{
+		types2.ServicePort{
+			ID:             types2.ServicePortID{Service: svc},
 			BackendNamer:   defaultNamer,
 			VMIPNEGEnabled: true},
-		utils.ServicePort{
-			ID:           utils.ServicePortID{Service: svc},
+		types2.ServicePort{
+			ID:           types2.ServicePortID{Service: svc},
 			Port:         80,
 			NodePort:     30001,
 			Protocol:     annotations.ProtocolHTTP,

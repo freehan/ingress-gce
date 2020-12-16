@@ -15,6 +15,8 @@ package translator
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/shared"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"sort"
 	"strconv"
 	"strings"
@@ -67,7 +69,7 @@ type Translator struct {
 	ctx *context.ControllerContext
 }
 
-func (t *Translator) getCachedService(id utils.ServicePortID) (*api_v1.Service, error) {
+func (t *Translator) getCachedService(id types.ServicePortID) (*api_v1.Service, error) {
 	obj, exists, err := t.ctx.ServiceInformer.GetIndexer().Get(
 		&api_v1.Service{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -92,7 +94,7 @@ func (t *Translator) getCachedService(id utils.ServicePortID) (*api_v1.Service, 
 }
 
 // maybeEnableNEG enables NEG on the service port if necessary
-func maybeEnableNEG(sp *utils.ServicePort, svc *api_v1.Service) error {
+func maybeEnableNEG(sp *types.ServicePort, svc *api_v1.Service) error {
 	negAnnotation, ok, err := annotations.FromService(svc).NEGAnnotation()
 	if ok && err == nil {
 		sp.NEGEnabled = negAnnotation.NEGEnabledForIngress()
@@ -113,7 +115,7 @@ func maybeEnableNEG(sp *utils.ServicePort, svc *api_v1.Service) error {
 }
 
 // setAppProtocol sets the app protocol on the service port
-func setAppProtocol(sp *utils.ServicePort, svc *api_v1.Service, port *api_v1.ServicePort) error {
+func setAppProtocol(sp *types.ServicePort, svc *api_v1.Service, port *api_v1.ServicePort) error {
 	appProtocols, err := annotations.FromService(svc).ApplicationProtocols()
 	if err != nil {
 		return errors.ErrSvcAppProtosParsing{Service: sp.ID.Service, Err: err}
@@ -129,7 +131,7 @@ func setAppProtocol(sp *utils.ServicePort, svc *api_v1.Service, port *api_v1.Ser
 }
 
 // maybeEnableBackendConfig sets the backendConfig for the service port if necessary
-func (t *Translator) maybeEnableBackendConfig(sp *utils.ServicePort, svc *api_v1.Service, port *api_v1.ServicePort) error {
+func (t *Translator) maybeEnableBackendConfig(sp *types.ServicePort, svc *api_v1.Service, port *api_v1.ServicePort) error {
 	var beConfig *backendconfigv1.BackendConfig
 	beConfig, err := backendconfig.GetBackendConfigForServicePort(t.ctx.BackendConfigInformer.GetIndexer(), svc, port)
 	if err != nil {
@@ -154,13 +156,13 @@ func (t *Translator) maybeEnableBackendConfig(sp *utils.ServicePort, svc *api_v1
 
 // getServicePort looks in the svc store for a matching service:port,
 // and returns the nodeport.
-func (t *Translator) getServicePort(id utils.ServicePortID, params *getServicePortParams, namer namer_util.BackendNamer) (*utils.ServicePort, error) {
+func (t *Translator) getServicePort(id types.ServicePortID, params *getServicePortParams, namer namer_util.BackendNamer) (*types.ServicePort, error) {
 	svc, err := t.getCachedService(id)
 	if err != nil {
 		return nil, err
 	}
 
-	port := ServicePort(*svc, id.Port)
+	port := shared.ServicePort(*svc, id.Port)
 	if port == nil {
 		// This is a fatal error.
 		return nil, errors.ErrSvcPortNotFound{ServicePortID: id}
@@ -168,7 +170,7 @@ func (t *Translator) getServicePort(id utils.ServicePortID, params *getServicePo
 
 	// We periodically add information to the ServicePort to ensure that we
 	// always return as much as possible, rather than nil, if there was a non-fatal error.
-	svcPort := &utils.ServicePort{
+	svcPort := &types.ServicePort{
 		ID:           id,
 		NodePort:     int64(port.NodePort),
 		Port:         int32(port.Port),
@@ -193,9 +195,9 @@ func (t *Translator) getServicePort(id utils.ServicePortID, params *getServicePo
 }
 
 // TranslateIngress converts an Ingress into our internal UrlMap representation.
-func (t *Translator) TranslateIngress(ing *v1beta1.Ingress, systemDefaultBackend utils.ServicePortID, namer namer_util.BackendNamer) (*utils.GCEURLMap, []error) {
+func (t *Translator) TranslateIngress(ing *v1beta1.Ingress, systemDefaultBackend types.ServicePortID, namer namer_util.BackendNamer) (*types.GCEURLMap, []error) {
 	var errs []error
-	urlMap := utils.NewGCEURLMap()
+	urlMap := types.NewGCEURLMap()
 
 	params := &getServicePortParams{}
 	params.isL7ILB = flags.F.EnableL7Ilb && utils.IsGCEL7ILBIngress(ing)
@@ -205,9 +207,9 @@ func (t *Translator) TranslateIngress(ing *v1beta1.Ingress, systemDefaultBackend
 			continue
 		}
 
-		pathRules := []utils.PathRule{}
+		pathRules := []types.PathRule{}
 		for _, p := range rule.HTTP.Paths {
-			svcPort, err := t.getServicePort(utils.BackendToServicePortID(p.Backend, ing.Namespace), params, namer)
+			svcPort, err := t.getServicePort(types.BackendToServicePortID(p.Backend, ing.Namespace), params, namer)
 			if err != nil {
 				errs = append(errs, err)
 			}
@@ -225,7 +227,7 @@ func (t *Translator) TranslateIngress(ing *v1beta1.Ingress, systemDefaultBackend
 					if path == "" {
 						path = DefaultPath
 					}
-					pathRules = append(pathRules, utils.PathRule{Path: path, Backend: *svcPort})
+					pathRules = append(pathRules, types.PathRule{Path: path, Backend: *svcPort})
 				}
 			}
 		}
@@ -238,7 +240,7 @@ func (t *Translator) TranslateIngress(ing *v1beta1.Ingress, systemDefaultBackend
 	}
 
 	if ing.Spec.Backend != nil {
-		svcPort, err := t.getServicePort(utils.BackendToServicePortID(*ing.Spec.Backend, ing.Namespace), params, namer)
+		svcPort, err := t.getServicePort(types.BackendToServicePortID(*ing.Spec.Backend, ing.Namespace), params, namer)
 		if err == nil {
 			urlMap.DefaultBackend = svcPort
 			return urlMap, errs
@@ -415,7 +417,7 @@ func (t *Translator) getHTTPProbe(svc api_v1.Service, targetPort intstr.IntOrStr
 }
 
 // GatherEndpointPorts returns all ports needed to open NEG endpoints.
-func (t *Translator) GatherEndpointPorts(svcPorts []utils.ServicePort) []string {
+func (t *Translator) GatherEndpointPorts(svcPorts []types.ServicePort) []string {
 	portMap := map[int64]bool{}
 	for _, p := range svcPorts {
 		if p.NEGEnabled {
@@ -454,7 +456,7 @@ func getProbeScheme(protocol annotations.AppProtocol) api_v1.URIScheme {
 }
 
 // GetProbe returns a probe that's used for the given nodeport
-func (t *Translator) GetProbe(port utils.ServicePort) (*api_v1.Probe, error) {
+func (t *Translator) GetProbe(port types.ServicePort) (*api_v1.Probe, error) {
 	sl := t.ctx.ServiceInformer.GetIndexer().List()
 
 	// Find the label and target port of the one service with the given nodePort

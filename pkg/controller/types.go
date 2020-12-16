@@ -19,12 +19,12 @@ package controller
 import (
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/ingress-gce/pkg/loadbalancers"
-	"k8s.io/ingress-gce/pkg/utils"
+	"k8s.io/ingress-gce/pkg/utils/types"
 )
 
 // syncState is used by the controller to maintain state for routines that sync GCP resources of an Ingress.
 type syncState struct {
-	urlMap *utils.GCEURLMap
+	urlMap *types.GCEURLMap
 	ing    *v1beta1.Ingress
 	l7     *loadbalancers.L7
 }

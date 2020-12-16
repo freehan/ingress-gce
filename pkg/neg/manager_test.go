@@ -24,9 +24,6 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
-	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
-
 	apiv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,6 +34,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/record"
 	negv1beta1 "k8s.io/ingress-gce/pkg/apis/svcneg/v1beta1"
+	"k8s.io/ingress-gce/pkg/composite"
 	"k8s.io/ingress-gce/pkg/neg/types"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
 	svcnegclient "k8s.io/ingress-gce/pkg/svcneg/client/clientset/versioned"
@@ -1110,14 +1108,14 @@ func TestGarbageCollectionNegCrdEnabled(t *testing.T) {
 	port80 := int32(80)
 	zones := []string{negtypes.TestZone1, negtypes.TestZone2}
 
-	matchingDesc := utils.NegDescription{
+	matchingDesc := negtypes.NegDescription{
 		ClusterUID:  KubeSystemUID,
 		Namespace:   testServiceNamespace,
 		ServiceName: testServiceName,
 		Port:        fmt.Sprintf("%v", port80),
 	}
 
-	wrongDesc := utils.NegDescription{
+	wrongDesc := negtypes.NegDescription{
 		ClusterUID:  "another-cluster",
 		Namespace:   "another-namespace",
 		ServiceName: "another-svc",

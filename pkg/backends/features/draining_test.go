@@ -17,23 +17,23 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 func TestEnsureDraining(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		sp             utils.ServicePort
+		sp             types.ServicePort
 		be             *composite.BackendService
 		updateExpected bool
 	}{
 		{
 			desc: "connection draining timeout setting is defined on serviceport but missing from spec, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						ConnectionDraining: &backendconfigv1.ConnectionDrainingConfig{
@@ -49,7 +49,7 @@ func TestEnsureDraining(t *testing.T) {
 		},
 		{
 			desc: "connection draining setting are missing from spec, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{},
 				},
@@ -63,7 +63,7 @@ func TestEnsureDraining(t *testing.T) {
 		},
 		{
 			desc: "connection draining settings are identical, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						ConnectionDraining: &backendconfigv1.ConnectionDrainingConfig{
@@ -81,7 +81,7 @@ func TestEnsureDraining(t *testing.T) {
 		},
 		{
 			desc: "connection draining settings differs, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						ConnectionDraining: &backendconfigv1.ConnectionDrainingConfig{

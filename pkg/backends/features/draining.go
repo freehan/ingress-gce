@@ -17,10 +17,10 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
@@ -28,7 +28,7 @@ import (
 // the ServicePort.BackendConfig and applies it to the BackendService.
 // It returns true if there were existing settings on the BackendService
 // that were overwritten.
-func EnsureDraining(sp utils.ServicePort, be *composite.BackendService) bool {
+func EnsureDraining(sp types.ServicePort, be *composite.BackendService) bool {
 	if sp.BackendConfig.Spec.ConnectionDraining == nil {
 		return false
 	}
@@ -45,7 +45,7 @@ func EnsureDraining(sp utils.ServicePort, be *composite.BackendService) bool {
 // applyDrainingSettings applies the ConnectionDraining settings specified in the
 // BackendConfig to the passed in composite.BackendService. A GCE API call still needs
 // to be made to actually persist the changes.
-func applyDrainingSettings(sp utils.ServicePort, be *composite.BackendService) {
+func applyDrainingSettings(sp types.ServicePort, be *composite.BackendService) {
 	be.ConnectionDraining = &composite.ConnectionDraining{}
 	be.ConnectionDraining.DrainingTimeoutSec = sp.BackendConfig.Spec.ConnectionDraining.DrainingTimeoutSec
 }

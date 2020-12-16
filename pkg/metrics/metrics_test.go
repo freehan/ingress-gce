@@ -18,6 +18,7 @@ package metrics
 
 import (
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -34,9 +35,9 @@ import (
 var (
 	testTTL          = int64(10)
 	defaultNamespace = "default"
-	testServicePorts = []utils.ServicePort{
+	testServicePorts = []types2.ServicePort{
 		{
-			ID: utils.ServicePortID{
+			ID: types2.ServicePortID{
 				Service: types.NamespacedName{
 					Name:      "dummy-service",
 					Namespace: defaultNamespace,
@@ -64,7 +65,7 @@ var (
 			},
 		},
 		{
-			ID: utils.ServicePortID{
+			ID: types2.ServicePortID{
 				Service: types.NamespacedName{
 					Name:      "foo-service",
 					Namespace: defaultNamespace,
@@ -90,7 +91,7 @@ var (
 		},
 		// NEG default backend.
 		{
-			ID: utils.ServicePortID{
+			ID: types2.ServicePortID{
 				Service: types.NamespacedName{
 					Name:      "dummy-service",
 					Namespace: defaultNamespace,
@@ -101,7 +102,7 @@ var (
 			L7ILBEnabled: true,
 		},
 		{
-			ID: utils.ServicePortID{
+			ID: types2.ServicePortID{
 				Service: types.NamespacedName{
 					Name:      "bar-service",
 					Namespace: defaultNamespace,
@@ -131,7 +132,7 @@ var (
 		ing              *v1beta1.Ingress
 		fc               *frontendconfigv1beta1.FrontendConfig
 		frontendFeatures []feature
-		svcPorts         []utils.ServicePort
+		svcPorts         []types2.ServicePort
 		backendFeatures  []feature
 	}{
 		{
@@ -144,7 +145,7 @@ var (
 			},
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -159,7 +160,7 @@ var (
 			},
 			nil,
 			[]feature{ingress, externalIngress},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -179,7 +180,7 @@ var (
 			},
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled},
-			[]utils.ServicePort{testServicePorts[0]},
+			[]types2.ServicePort{testServicePorts[0]},
 			[]feature{servicePort, externalServicePort, cloudCDN,
 				cookieAffinity, cloudArmor, backendConnectionDraining, customHealthChecks},
 		},
@@ -200,7 +201,7 @@ var (
 			},
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled, hostBasedRouting},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -234,7 +235,7 @@ var (
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled,
 				hostBasedRouting, pathBasedRouting},
-			[]utils.ServicePort{testServicePorts[1]},
+			[]types2.ServicePort{testServicePorts[1]},
 			[]feature{servicePort, externalServicePort, neg, cloudIAP,
 				clientIPAffinity, backendTimeout, customRequestHeaders},
 		},
@@ -300,7 +301,7 @@ var (
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, preSharedCertsForTLS},
-			[]utils.ServicePort{testServicePorts[0]},
+			[]types2.ServicePort{testServicePorts[0]},
 			[]feature{servicePort, externalServicePort, cloudCDN,
 				cookieAffinity, cloudArmor, backendConnectionDraining, customHealthChecks},
 		},
@@ -326,7 +327,7 @@ var (
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, managedCertsForTLS},
-			[]utils.ServicePort{testServicePorts[0]},
+			[]types2.ServicePort{testServicePorts[0]},
 			[]feature{servicePort, externalServicePort, cloudCDN,
 				cookieAffinity, cloudArmor, backendConnectionDraining, customHealthChecks},
 		},
@@ -353,7 +354,7 @@ var (
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, preSharedCertsForTLS, managedCertsForTLS},
-			[]utils.ServicePort{testServicePorts[0]},
+			[]types2.ServicePort{testServicePorts[0]},
 			[]feature{servicePort, externalServicePort, cloudCDN,
 				cookieAffinity, cloudArmor, backendConnectionDraining, customHealthChecks},
 		},
@@ -398,7 +399,7 @@ var (
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled, hostBasedRouting,
 				pathBasedRouting, tlsTermination, preSharedCertsForTLS, secretBasedCertsForTLS},
-			[]utils.ServicePort{testServicePorts[1]},
+			[]types2.ServicePort{testServicePorts[1]},
 			[]feature{servicePort, externalServicePort, neg, cloudIAP,
 				clientIPAffinity, backendTimeout, customRequestHeaders},
 		},
@@ -425,7 +426,7 @@ var (
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, preSharedCertsForTLS, staticGlobalIP, managedStaticGlobalIP},
-			[]utils.ServicePort{testServicePorts[0]},
+			[]types2.ServicePort{testServicePorts[0]},
 			[]feature{servicePort, externalServicePort, cloudCDN,
 				cookieAffinity, cloudArmor, backendConnectionDraining, customHealthChecks},
 		},
@@ -467,7 +468,7 @@ var (
 			nil,
 			[]feature{ingress, internalIngress, httpEnabled,
 				hostBasedRouting, pathBasedRouting},
-			[]utils.ServicePort{testServicePorts[2], testServicePorts[3]},
+			[]types2.ServicePort{testServicePorts[2], testServicePorts[3]},
 			[]feature{servicePort, internalServicePort, neg, cloudIAP,
 				cookieAffinity, backendConnectionDraining},
 		},
@@ -491,7 +492,7 @@ var (
 			},
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -516,7 +517,7 @@ var (
 			nil,
 			[]feature{ingress, externalIngress, httpEnabled,
 				staticGlobalIP, specifiedStaticGlobalIP},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -545,7 +546,7 @@ var (
 			},
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, preSharedCertsForTLS, sslPolicy},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -570,7 +571,7 @@ var (
 			nil,
 			[]feature{ingress, internalIngress, httpEnabled,
 				specifiedStaticRegionalIP},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -599,7 +600,7 @@ var (
 			},
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, preSharedCertsForTLS, httpsRedirects},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -628,7 +629,7 @@ var (
 			},
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, preSharedCertsForTLS},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 		{
@@ -657,7 +658,7 @@ var (
 			},
 			[]feature{ingress, externalIngress, httpEnabled,
 				tlsTermination, preSharedCertsForTLS},
-			[]utils.ServicePort{},
+			[]types2.ServicePort{},
 			nil,
 		},
 	}

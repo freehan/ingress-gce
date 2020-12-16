@@ -19,16 +19,16 @@ package features
 import (
 	"crypto/sha256"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
 // EnsureIAP reads the IAP configuration specified in the BackendConfig
 // and applies it to the BackendService if it is stale. It returns true
 // if there were existing settings on the BackendService that were overwritten.
-func EnsureIAP(sp utils.ServicePort, be *composite.BackendService) bool {
+func EnsureIAP(sp types.ServicePort, be *composite.BackendService) bool {
 	if sp.BackendConfig.Spec.Iap == nil {
 		return false
 	}
@@ -48,7 +48,7 @@ func EnsureIAP(sp utils.ServicePort, be *composite.BackendService) bool {
 // applyIAPSettings applies the IAP settings specified in the BackendConfig
 // to the passed in compute.BackendService. A GCE API call still needs to be
 // made to actually persist the changes.
-func applyIAPSettings(sp utils.ServicePort, be *composite.BackendService) {
+func applyIAPSettings(sp types.ServicePort, be *composite.BackendService) {
 	beConfig := sp.BackendConfig
 	// Apply the boolean switch
 	be.Iap = &composite.BackendServiceIAP{Enabled: beConfig.Spec.Iap.Enabled}

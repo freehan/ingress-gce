@@ -19,6 +19,7 @@ package backends
 import (
 	"context"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"reflect"
 	"testing"
@@ -44,21 +45,21 @@ import (
 // portset helps keep track of service ports during GC tests
 type portset struct {
 	// all represents the set all of service ports in the test
-	all map[utils.ServicePort]bool
+	all map[types2.ServicePort]bool
 	// existing represents what should exist in GCE
-	existing map[utils.ServicePort]bool
+	existing map[types2.ServicePort]bool
 }
 
-func newPortset(ports []utils.ServicePort) *portset {
-	ps := portset{all: map[utils.ServicePort]bool{}, existing: map[utils.ServicePort]bool{}}
+func newPortset(ports []types2.ServicePort) *portset {
+	ps := portset{all: map[types2.ServicePort]bool{}, existing: map[types2.ServicePort]bool{}}
 	for _, sp := range ports {
 		ps.all[sp] = true
 	}
 	return &ps
 }
 
-func (p *portset) existingPorts() []utils.ServicePort {
-	var result []utils.ServicePort
+func (p *portset) existingPorts() []types2.ServicePort {
+	var result []types2.ServicePort
 	for sp, _ := range p.existing {
 		result = append(result, sp)
 	}
@@ -66,7 +67,7 @@ func (p *portset) existingPorts() []utils.ServicePort {
 }
 
 // Add to 'existing' from all
-func (p *portset) add(ports []utils.ServicePort) error {
+func (p *portset) add(ports []types2.ServicePort) error {
 	for _, sp := range ports {
 		// Sanity check
 		if found := p.all[sp]; !found {
@@ -78,7 +79,7 @@ func (p *portset) add(ports []utils.ServicePort) error {
 }
 
 // Delete from 'existing'
-func (p *portset) del(ports []utils.ServicePort) error {
+func (p *portset) del(ports []types2.ServicePort) error {
 	for _, sp := range ports {
 		found := p.existing[sp]
 		if !found {
@@ -146,7 +147,7 @@ func newTestSyncer(fakeGCE *gce.Cloud) *backendSyncer {
 		cloud:         fakeGCE,
 	}
 
-	probes := map[utils.ServicePort]*api_v1.Probe{{NodePort: 443, Protocol: annotations.ProtocolHTTPS, BackendNamer: defaultNamer}: existingProbe}
+	probes := map[types2.ServicePort]*api_v1.Probe{{NodePort: 443, Protocol: annotations.ProtocolHTTPS, BackendNamer: defaultNamer}: existingProbe}
 	syncer.Init(NewFakeProbeProvider(probes))
 
 	// Add standard hooks for mocking update calls. Each test can set a different update hook if it chooses to.
@@ -165,7 +166,7 @@ func TestSync(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	testCases := []utils.ServicePort{
+	testCases := []types2.ServicePort{
 		{NodePort: 80, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer},
 		// Note: 443 gets its healthcheck from a probe
 		{NodePort: 443, Protocol: annotations.ProtocolHTTPS, BackendNamer: defaultNamer},
@@ -174,7 +175,7 @@ func TestSync(t *testing.T) {
 
 	for _, sp := range testCases {
 		t.Run(fmt.Sprintf("Port: %v Protocol: %v", sp.NodePort, sp.Protocol), func(t *testing.T) {
-			if err := syncer.Sync([]utils.ServicePort{sp}); err != nil {
+			if err := syncer.Sync([]types2.ServicePort{sp}); err != nil {
 				t.Fatalf("Unexpected error when syncing backend with port %v: %v", sp.NodePort, err)
 			}
 			beName := sp.BackendName()
@@ -208,8 +209,8 @@ func TestSyncUpdateHTTPS(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	p := utils.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
-	syncer.Sync([]utils.ServicePort{p})
+	p := types2.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
+	syncer.Sync([]types2.ServicePort{p})
 	beName := p.BackendName()
 
 	be, err := syncer.backendPool.Get(beName, features.VersionFromServicePort(&p), features.ScopeFromServicePort(&p))
@@ -229,7 +230,7 @@ func TestSyncUpdateHTTPS(t *testing.T) {
 
 	// Update service port to encrypted
 	p.Protocol = annotations.ProtocolHTTPS
-	syncer.Sync([]utils.ServicePort{p})
+	syncer.Sync([]types2.ServicePort{p})
 
 	be, err = syncer.backendPool.Get(beName, features.VersionFromServicePort(&p), features.ScopeFromServicePort(&p))
 	if err != nil {
@@ -252,8 +253,8 @@ func TestSyncUpdateHTTP2(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	p := utils.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
-	syncer.Sync([]utils.ServicePort{p})
+	p := types2.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
+	syncer.Sync([]types2.ServicePort{p})
 	beName := p.BackendName()
 
 	be, err := syncer.backendPool.Get(beName, features.VersionFromServicePort(&p), features.ScopeFromServicePort(&p))
@@ -273,7 +274,7 @@ func TestSyncUpdateHTTP2(t *testing.T) {
 
 	// Update service port to HTTP2
 	p.Protocol = annotations.ProtocolHTTP2
-	syncer.Sync([]utils.ServicePort{p})
+	syncer.Sync([]types2.ServicePort{p})
 
 	beBeta, err := syncer.backendPool.Get(beName, features.VersionFromServicePort(&p), features.ScopeFromServicePort(&p))
 	if err != nil {
@@ -297,7 +298,7 @@ func TestGC(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	svcNodePorts := []utils.ServicePort{
+	svcNodePorts := []types2.ServicePort{
 		{NodePort: 81, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer},
 		{NodePort: 82, Protocol: annotations.ProtocolHTTPS, BackendNamer: defaultNamer},
 		{NodePort: 83, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer},
@@ -325,7 +326,7 @@ func TestGC(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ps.del([]utils.ServicePort{svcNodePorts[1], svcNodePorts[2]}); err != nil {
+	if err := ps.del([]types2.ServicePort{svcNodePorts[1], svcNodePorts[2]}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -343,14 +344,14 @@ func TestGCMixed(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	svcNodePorts := []utils.ServicePort{
+	svcNodePorts := []types2.ServicePort{
 		{NodePort: 81, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer},
 		{NodePort: 82, Protocol: annotations.ProtocolHTTPS, BackendNamer: defaultNamer},
 		{NodePort: 83, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer},
 		{NodePort: 84, Protocol: annotations.ProtocolHTTP, NEGEnabled: true, L7ILBEnabled: true, BackendNamer: defaultNamer},
 		{NodePort: 85, Protocol: annotations.ProtocolHTTPS, NEGEnabled: true, L7ILBEnabled: true, BackendNamer: defaultNamer},
 		{NodePort: 86, Protocol: annotations.ProtocolHTTP, NEGEnabled: true, L7ILBEnabled: true, BackendNamer: defaultNamer},
-		{ID: utils.ServicePortID{Service: types.NamespacedName{Name: "testsvc"}}, VMIPNEGEnabled: true, BackendNamer: defaultNamer},
+		{ID: types2.ServicePortID{Service: types.NamespacedName{Name: "testsvc"}}, VMIPNEGEnabled: true, BackendNamer: defaultNamer},
 	}
 	ps := newPortset(svcNodePorts)
 	if err := ps.add(svcNodePorts); err != nil {
@@ -375,7 +376,7 @@ func TestGCMixed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ps.del([]utils.ServicePort{svcNodePorts[1], svcNodePorts[2]}); err != nil {
+	if err := ps.del([]types2.ServicePort{svcNodePorts[1], svcNodePorts[2]}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -390,40 +391,40 @@ func TestGCMixed(t *testing.T) {
 
 func TestSyncQuota(t *testing.T) {
 	testCases := []struct {
-		oldPorts      []utils.ServicePort
-		newPorts      []utils.ServicePort
+		oldPorts      []types2.ServicePort
+		newPorts      []types2.ServicePort
 		expectSyncErr bool
 		desc          string
 	}{
 		{
-			[]utils.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
-			[]utils.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
 			false,
 			"Same port",
 		},
 		{
-			[]utils.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
-			[]utils.ServicePort{{NodePort: 9000, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 9000, BackendNamer: defaultNamer}},
 			true,
 			"Different port",
 		},
 		{
-			[]utils.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
-			[]utils.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}, {NodePort: 443, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}, {NodePort: 443, BackendNamer: defaultNamer}},
 			false,
 			"Same port plus additional port",
 		},
 		{
-			[]utils.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
-			[]utils.ServicePort{{NodePort: 3000, BackendNamer: defaultNamer}, {NodePort: 4000, BackendNamer: defaultNamer}, {NodePort: 5000, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{{NodePort: 3000, BackendNamer: defaultNamer}, {NodePort: 4000, BackendNamer: defaultNamer}, {NodePort: 5000, BackendNamer: defaultNamer}},
 			true,
 			"New set of ports not including the same port",
 		},
 		// Need to fill the TargetPort field on ServicePort to make sure
 		// NEG Backend naming is unique
 		{
-			[]utils.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}, {NodePort: 443, BackendNamer: defaultNamer}},
-			[]utils.ServicePort{
+			[]types2.ServicePort{{NodePort: 8080, BackendNamer: defaultNamer}, {NodePort: 443, BackendNamer: defaultNamer}},
+			[]types2.ServicePort{
 				{Port: 8080, NodePort: 8080, NEGEnabled: true, BackendNamer: defaultNamer},
 				{Port: 443, NodePort: 443, NEGEnabled: true, BackendNamer: defaultNamer},
 			},
@@ -431,11 +432,11 @@ func TestSyncQuota(t *testing.T) {
 			"Same port converted to NEG, plus one new NEG port",
 		},
 		{
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				{Port: 80, NodePort: 80, NEGEnabled: true, BackendNamer: defaultNamer},
 				{Port: 90, NodePort: 90, BackendNamer: defaultNamer},
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				{Port: 80, BackendNamer: defaultNamer},
 				{Port: 90, NEGEnabled: true, BackendNamer: defaultNamer},
 			},
@@ -443,12 +444,12 @@ func TestSyncQuota(t *testing.T) {
 			"Mixed NEG and non-NEG ports",
 		},
 		{
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				{Port: 100, NodePort: 100, NEGEnabled: true, BackendNamer: defaultNamer},
 				{Port: 110, NodePort: 110, NEGEnabled: true, BackendNamer: defaultNamer},
 				{Port: 120, NodePort: 120, NEGEnabled: true, BackendNamer: defaultNamer},
 			},
-			[]utils.ServicePort{
+			[]types2.ServicePort{
 				{Port: 100, NodePort: 100, BackendNamer: defaultNamer},
 				{Port: 110, NodePort: 110, BackendNamer: defaultNamer},
 				{Port: 120, NodePort: 120, BackendNamer: defaultNamer},
@@ -514,8 +515,8 @@ func TestSyncNEG(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	svcPort := utils.ServicePort{NodePort: 81, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
-	if err := syncer.Sync([]utils.ServicePort{svcPort}); err != nil {
+	svcPort := types2.ServicePort{NodePort: 81, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
+	if err := syncer.Sync([]types2.ServicePort{svcPort}); err != nil {
 		t.Errorf("Expected backend pool to add node ports, err: %v", err)
 	}
 
@@ -527,7 +528,7 @@ func TestSyncNEG(t *testing.T) {
 
 	// Convert to NEG
 	svcPort.NEGEnabled = true
-	if err := syncer.Sync([]utils.ServicePort{svcPort}); err != nil {
+	if err := syncer.Sync([]types2.ServicePort{svcPort}); err != nil {
 		t.Errorf("Expected backend pool to add node ports, err: %v", err)
 	}
 
@@ -537,7 +538,7 @@ func TestSyncNEG(t *testing.T) {
 		t.Fatalf("Failed to get backend service with name %v: %v", negName, err)
 	}
 	// GC should garbage collect the Backend on the old naming schema
-	syncer.GC([]utils.ServicePort{svcPort})
+	syncer.GC([]types2.ServicePort{svcPort})
 
 	bs, err := syncer.backendPool.Get(nodePortName, features.VersionFromServicePort(&svcPort), features.ScopeFromServicePort(&svcPort))
 	if err == nil {
@@ -546,11 +547,11 @@ func TestSyncNEG(t *testing.T) {
 
 	// Convert back to non-NEG
 	svcPort.NEGEnabled = false
-	if err := syncer.Sync([]utils.ServicePort{svcPort}); err != nil {
+	if err := syncer.Sync([]types2.ServicePort{svcPort}); err != nil {
 		t.Errorf("Expected backend pool to add node ports, err: %v", err)
 	}
 
-	syncer.GC([]utils.ServicePort{svcPort})
+	syncer.GC([]types2.ServicePort{svcPort})
 
 	_, err = fakeGCE.GetGlobalBackendService(nodePortName)
 	if err != nil {
@@ -563,7 +564,7 @@ func TestShutdown(t *testing.T) {
 	syncer := newTestSyncer(fakeGCE)
 
 	// Sync a backend and verify that it doesn't exist after Shutdown()
-	syncer.Sync([]utils.ServicePort{{NodePort: 80, BackendNamer: defaultNamer}})
+	syncer.Sync([]types2.ServicePort{{NodePort: 80, BackendNamer: defaultNamer}})
 	syncer.Shutdown()
 	if _, err := fakeGCE.GetGlobalBackendService(defaultNamer.IGBackend(80)); err == nil {
 		t.Fatalf("%v", err)
@@ -574,10 +575,10 @@ func TestEnsureBackendServiceProtocol(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	svcPorts := []utils.ServicePort{
-		{NodePort: 80, Protocol: annotations.ProtocolHTTP, ID: utils.ServicePortID{Port: intstr.FromInt(1)}, BackendNamer: defaultNamer},
-		{NodePort: 443, Protocol: annotations.ProtocolHTTPS, ID: utils.ServicePortID{Port: intstr.FromInt(2)}, BackendNamer: defaultNamer},
-		{NodePort: 3000, Protocol: annotations.ProtocolHTTP2, ID: utils.ServicePortID{Port: intstr.FromInt(3)}, BackendNamer: defaultNamer},
+	svcPorts := []types2.ServicePort{
+		{NodePort: 80, Protocol: annotations.ProtocolHTTP, ID: types2.ServicePortID{Port: intstr.FromInt(1)}, BackendNamer: defaultNamer},
+		{NodePort: 443, Protocol: annotations.ProtocolHTTPS, ID: types2.ServicePortID{Port: intstr.FromInt(2)}, BackendNamer: defaultNamer},
+		{NodePort: 3000, Protocol: annotations.ProtocolHTTP2, ID: types2.ServicePortID{Port: intstr.FromInt(3)}, BackendNamer: defaultNamer},
 	}
 
 	for _, oldPort := range svcPorts {
@@ -585,7 +586,7 @@ func TestEnsureBackendServiceProtocol(t *testing.T) {
 			t.Run(
 				fmt.Sprintf("Updating Port:%v Protocol:%v to Port:%v Protocol:%v", oldPort.NodePort, oldPort.Protocol, newPort.NodePort, newPort.Protocol),
 				func(t *testing.T) {
-					syncer.Sync([]utils.ServicePort{oldPort})
+					syncer.Sync([]types2.ServicePort{oldPort})
 					be, err := syncer.backendPool.Get(oldPort.BackendName(), features.VersionFromServicePort(&oldPort), features.ScopeFromServicePort(&oldPort))
 					if err != nil {
 						t.Fatalf("%v", err)
@@ -618,10 +619,10 @@ func TestEnsureBackendServiceDescription(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	svcPorts := []utils.ServicePort{
-		{NodePort: 80, Protocol: annotations.ProtocolHTTP, ID: utils.ServicePortID{Port: intstr.FromInt(1)}, BackendNamer: defaultNamer},
-		{NodePort: 443, Protocol: annotations.ProtocolHTTPS, ID: utils.ServicePortID{Port: intstr.FromInt(2)}, BackendNamer: defaultNamer},
-		{NodePort: 3000, Protocol: annotations.ProtocolHTTP2, ID: utils.ServicePortID{Port: intstr.FromInt(3)}, BackendNamer: defaultNamer},
+	svcPorts := []types2.ServicePort{
+		{NodePort: 80, Protocol: annotations.ProtocolHTTP, ID: types2.ServicePortID{Port: intstr.FromInt(1)}, BackendNamer: defaultNamer},
+		{NodePort: 443, Protocol: annotations.ProtocolHTTPS, ID: types2.ServicePortID{Port: intstr.FromInt(2)}, BackendNamer: defaultNamer},
+		{NodePort: 3000, Protocol: annotations.ProtocolHTTP2, ID: types2.ServicePortID{Port: intstr.FromInt(3)}, BackendNamer: defaultNamer},
 	}
 
 	for _, oldPort := range svcPorts {
@@ -629,7 +630,7 @@ func TestEnsureBackendServiceDescription(t *testing.T) {
 			t.Run(
 				fmt.Sprintf("Updating Port:%v Protocol:%v to Port:%v Protocol:%v", oldPort.NodePort, oldPort.Protocol, newPort.NodePort, newPort.Protocol),
 				func(t *testing.T) {
-					syncer.Sync([]utils.ServicePort{oldPort})
+					syncer.Sync([]types2.ServicePort{oldPort})
 					be, err := syncer.backendPool.Get(oldPort.BackendName(), features.VersionFromServicePort(&oldPort), features.ScopeFromServicePort(&oldPort))
 					if err != nil {
 						t.Fatalf("%v", err)
@@ -656,8 +657,8 @@ func TestEnsureBackendServiceHealthCheckLink(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	syncer := newTestSyncer(fakeGCE)
 
-	p := utils.ServicePort{NodePort: 80, Protocol: annotations.ProtocolHTTP, ID: utils.ServicePortID{Port: intstr.FromInt(1)}, BackendNamer: defaultNamer}
-	syncer.Sync([]utils.ServicePort{p})
+	p := types2.ServicePort{NodePort: 80, Protocol: annotations.ProtocolHTTP, ID: types2.ServicePortID{Port: intstr.FromInt(1)}, BackendNamer: defaultNamer}
+	syncer.Sync([]types2.ServicePort{p})
 	be, err := syncer.backendPool.Get(p.BackendName(), features.VersionFromServicePort(&p), features.ScopeFromServicePort(&p))
 	if err != nil {
 		t.Fatalf("%v", err)

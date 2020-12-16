@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -31,7 +32,6 @@ import (
 	"k8s.io/ingress-gce/pkg/fuzz"
 	"k8s.io/ingress-gce/pkg/fuzz/features"
 	"k8s.io/ingress-gce/pkg/test"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/ingress-gce/pkg/utils/common"
 )
 
@@ -199,7 +199,7 @@ func TestLogging(t *testing.T) {
 
 func verifyLogging(t *testing.T, gclb *fuzz.GCLB, svcNamespace, svcName string, expectedLogConfig logging) error {
 	for _, bs := range gclb.BackendService {
-		desc := utils.DescriptionFromString(bs.GA.Description)
+		desc := types.DescriptionFromString(bs.GA.Description)
 		if desc.ServiceName != fmt.Sprintf("%s/%s", svcNamespace, svcName) {
 			continue
 		}

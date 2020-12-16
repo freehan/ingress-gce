@@ -19,6 +19,7 @@ package app
 import (
 	"context"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -34,7 +35,7 @@ import (
 
 // DefaultBackendServicePort returns the ServicePort which will be
 // used as the default backend for load balancers.
-func DefaultBackendServicePort(kubeClient kubernetes.Interface) utils.ServicePort {
+func DefaultBackendServicePort(kubeClient kubernetes.Interface) types2.ServicePort {
 	if flags.F.DefaultSvc == "" {
 		klog.Fatalf("Please specify --default-backend-service")
 	}
@@ -91,12 +92,12 @@ func IngressClassEnabled(client kubernetes.Interface) bool {
 }
 
 // servicePortForDefaultService returns the service port for the default service; returns nil if not found.
-func servicePortForDefaultService(svc *v1.Service, svcPort intstr.IntOrString, name types.NamespacedName) *utils.ServicePort {
+func servicePortForDefaultService(svc *v1.Service, svcPort intstr.IntOrString, name types.NamespacedName) *types2.ServicePort {
 	// Lookup TargetPort for service port
 	for _, port := range svc.Spec.Ports {
 		if port.Name == svcPort.String() {
-			return &utils.ServicePort{
-				ID: utils.ServicePortID{
+			return &types2.ServicePort{
+				ID: types2.ServicePortID{
 					Service: name,
 					Port:    svcPort,
 				},

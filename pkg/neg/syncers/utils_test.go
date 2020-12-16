@@ -32,7 +32,6 @@ import (
 	negv1beta1 "k8s.io/ingress-gce/pkg/apis/svcneg/v1beta1"
 	"k8s.io/ingress-gce/pkg/composite"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/legacy-cloud-providers/gce"
 )
 
@@ -398,14 +397,14 @@ func TestEnsureNetworkEndpointGroup(t *testing.T) {
 			t.Errorf("Unexpected Subnetwork, expecting %q but got %q", tc.expectedSubnetwork, neg.Subnetwork)
 		}
 
-		expectedNegDesc := utils.NegDescription{
+		expectedNegDesc := negtypes.NegDescription{
 			ClusterUID:  testKubesystemUID,
 			Namespace:   testServiceNamespace,
 			ServiceName: testServiceName,
 			Port:        testPort,
 		}
 
-		actualNegDesc, err := utils.NegDescriptionFromString(neg.Description)
+		actualNegDesc, err := negtypes.NegDescriptionFromString(neg.Description)
 		if err != nil {
 			t.Errorf("Invalid neg description: %s", err)
 		}
@@ -1035,14 +1034,14 @@ func TestNEGRecreate(t *testing.T) {
 		apiVersion           = meta.VersionGA
 	)
 
-	matchingNegDesc := utils.NegDescription{
+	matchingNegDesc := negtypes.NegDescription{
 		ClusterUID:  testKubesystemUID,
 		Namespace:   testServiceNamespace,
 		ServiceName: testServiceName,
 		Port:        testPort,
 	}.String()
 
-	anotherNegDesc := utils.NegDescription{
+	anotherNegDesc := negtypes.NegDescription{
 		ClusterUID:  "another-cluster",
 		Namespace:   testServiceNamespace,
 		ServiceName: testServiceName,

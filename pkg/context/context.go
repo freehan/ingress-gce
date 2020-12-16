@@ -16,6 +16,7 @@ package context
 import (
 	context2 "context"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"sync"
 	"time"
 
@@ -101,7 +102,7 @@ type ControllerContextConfig struct {
 	Namespace    string
 	ResyncPeriod time.Duration
 	// DefaultBackendSvcPortID is the ServicePort for the system default backend.
-	DefaultBackendSvcPort utils.ServicePort
+	DefaultBackendSvcPort types2.ServicePort
 	HealthCheckPath       string
 	FrontendConfigEnabled bool
 	EnableASMConfigMap    bool

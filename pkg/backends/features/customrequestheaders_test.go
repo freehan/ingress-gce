@@ -17,11 +17,11 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 var testCustomHeader = []string{"X-TEST-HEADER:{test-value}"}
@@ -29,19 +29,19 @@ var testCustomHeader = []string{"X-TEST-HEADER:{test-value}"}
 func TestEnsureCustomRequestHeaders(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		sp             utils.ServicePort
+		sp             types.ServicePort
 		be             *composite.BackendService
 		updateExpected bool
 	}{
 		{
 			desc:           "custom Request Headers missing from both ends, no update needed",
-			sp:             utils.ServicePort{BackendConfig: &backendconfigv1.BackendConfig{}},
+			sp:             types.ServicePort{BackendConfig: &backendconfigv1.BackendConfig{}},
 			be:             &composite.BackendService{},
 			updateExpected: false,
 		},
 		{
 			desc: "settings are identical, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						CustomRequestHeaders: &backendconfigv1.CustomRequestHeadersConfig{
@@ -57,7 +57,7 @@ func TestEnsureCustomRequestHeaders(t *testing.T) {
 		},
 		{
 			desc: "settings are different, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						CustomRequestHeaders: &backendconfigv1.CustomRequestHeadersConfig{
@@ -73,7 +73,7 @@ func TestEnsureCustomRequestHeaders(t *testing.T) {
 		},
 		{
 			desc: "backend config empty",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{},
 			},
 			be: &composite.BackendService{

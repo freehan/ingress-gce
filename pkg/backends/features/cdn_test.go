@@ -17,23 +17,23 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 func TestEnsureCDN(t *testing.T) {
 	testCases := []struct {
 		desc           string
-		sp             utils.ServicePort
+		sp             types.ServicePort
 		be             *composite.BackendService
 		updateExpected bool
 	}{
 		{
 			desc: "cdn setting are missing from spec, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Cdn: nil,
@@ -52,7 +52,7 @@ func TestEnsureCDN(t *testing.T) {
 		},
 		{
 			desc: "cache policies are missing from spec, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Cdn: &backendconfigv1.CDNConfig{
@@ -73,7 +73,7 @@ func TestEnsureCDN(t *testing.T) {
 		},
 		{
 			desc: "settings are identical, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Cdn: &backendconfigv1.CDNConfig{
@@ -97,7 +97,7 @@ func TestEnsureCDN(t *testing.T) {
 		},
 		{
 			desc: "cache settings are different, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Cdn: &backendconfigv1.CDNConfig{
@@ -125,7 +125,7 @@ func TestEnsureCDN(t *testing.T) {
 		},
 		{
 			desc: "enabled setting is different, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Cdn: &backendconfigv1.CDNConfig{

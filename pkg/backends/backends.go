@@ -15,6 +15,7 @@ package backends
 
 import (
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
@@ -54,7 +55,7 @@ func NewPool(cloud *gce.Cloud, namer namer.BackendNamer) *Backends {
 }
 
 // ensureDescription updates the BackendService Description with the expected value
-func ensureDescription(be *composite.BackendService, sp *utils.ServicePort) (needsUpdate bool) {
+func ensureDescription(be *composite.BackendService, sp *types2.ServicePort) (needsUpdate bool) {
 	desc := sp.GetDescription()
 	features.SetDescription(&desc, sp)
 	descString := desc.String()
@@ -66,7 +67,7 @@ func ensureDescription(be *composite.BackendService, sp *utils.ServicePort) (nee
 }
 
 // Create implements Pool.
-func (b *Backends) Create(sp utils.ServicePort, hcLink string) (*composite.BackendService, error) {
+func (b *Backends) Create(sp types2.ServicePort, hcLink string) (*composite.BackendService, error) {
 	name := sp.BackendName()
 	namedPort := &compute.NamedPort{
 		Name: b.namer.NamedPort(sp.NodePort),

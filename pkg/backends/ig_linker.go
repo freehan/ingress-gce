@@ -15,6 +15,7 @@ package backends
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"strings"
 
@@ -80,7 +81,7 @@ func NewInstanceGroupLinker(
 }
 
 // Link implements Link.
-func (l *instanceGroupLinker) Link(sp utils.ServicePort, groups []GroupKey) error {
+func (l *instanceGroupLinker) Link(sp types.ServicePort, groups []GroupKey) error {
 	var igLinks []string
 	for _, group := range groups {
 		ig, err := l.instancePool.Get(sp.IGName(), group.Zone)

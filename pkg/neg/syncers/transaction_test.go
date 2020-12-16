@@ -19,6 +19,7 @@ package syncers
 import (
 	context2 "context"
 	"fmt"
+	apiv1 "k8s.io/api/core/v1"
 	"net"
 	"reflect"
 	"strconv"
@@ -37,7 +38,6 @@ import (
 	"k8s.io/ingress-gce/pkg/composite"
 	"k8s.io/ingress-gce/pkg/neg/readiness"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/kubernetes/pkg/apis/core"
 	"k8s.io/legacy-cloud-providers/gce"
 )
@@ -873,7 +873,7 @@ func TestTransactionSyncerWithNegCR(t *testing.T) {
 		{
 			desc:      "Neg exists, cr has with populated status, with correct neg description",
 			negExists: true,
-			negDesc: utils.NegDescription{
+			negDesc: negtypes.NegDescription{
 				ClusterUID:  kubeSystemUID,
 				Namespace:   testNamespace,
 				ServiceName: testService,
@@ -892,7 +892,7 @@ func TestTransactionSyncerWithNegCR(t *testing.T) {
 		{
 			desc:      "Neg exists, with correct neg description",
 			negExists: true,
-			negDesc: utils.NegDescription{
+			negDesc: negtypes.NegDescription{
 				ClusterUID:  kubeSystemUID,
 				Namespace:   testNamespace,
 				ServiceName: testService,
@@ -904,7 +904,7 @@ func TestTransactionSyncerWithNegCR(t *testing.T) {
 		{
 			desc:      "Neg exists, with conflicting cluster id in neg description",
 			negExists: true,
-			negDesc: utils.NegDescription{
+			negDesc: negtypes.NegDescription{
 				ClusterUID:  "cluster-2",
 				Namespace:   testNamespace,
 				ServiceName: testService,
@@ -916,7 +916,7 @@ func TestTransactionSyncerWithNegCR(t *testing.T) {
 		{
 			desc:      "Neg exists, with conflicting namespace in neg description",
 			negExists: true,
-			negDesc: utils.NegDescription{
+			negDesc: negtypes.NegDescription{
 				ClusterUID:  kubeSystemUID,
 				Namespace:   "namespace-2",
 				ServiceName: testService,
@@ -928,7 +928,7 @@ func TestTransactionSyncerWithNegCR(t *testing.T) {
 		{
 			desc:      "Neg exists, with conflicting service in neg description",
 			negExists: true,
-			negDesc: utils.NegDescription{
+			negDesc: negtypes.NegDescription{
 				ClusterUID:  kubeSystemUID,
 				Namespace:   testNamespace,
 				ServiceName: "service-2",
@@ -940,7 +940,7 @@ func TestTransactionSyncerWithNegCR(t *testing.T) {
 		{
 			desc:      "Neg exists, with conflicting port in neg description",
 			negExists: true,
-			negDesc: utils.NegDescription{
+			negDesc: negtypes.NegDescription{
 				ClusterUID:  kubeSystemUID,
 				Namespace:   testNamespace,
 				ServiceName: testService,
@@ -953,7 +953,7 @@ func TestTransactionSyncerWithNegCR(t *testing.T) {
 			desc:      "Neg exists, cr has populated status, but error during initialization",
 			negExists: true,
 			// Cause error by having a conflicting neg description
-			negDesc: utils.NegDescription{
+			negDesc: negtypes.NegDescription{
 				ClusterUID:  kubeSystemUID,
 				Namespace:   testNamespace,
 				ServiceName: testService,
@@ -1386,13 +1386,13 @@ func negObjectReferences(negs map[*meta.Key]*composite.NetworkEndpointGroup) map
 // checks the NEG Description on the cloud NEG Object and verifies with expected
 // description from the syncer.
 func checkNegDescription(t *testing.T, syncer *transactionSyncer, desc string) {
-	expectedNegDesc := utils.NegDescription{
+	expectedNegDesc := negtypes.NegDescription{
 		ClusterUID:  syncer.kubeSystemUID,
 		Namespace:   syncer.NegSyncerKey.Namespace,
 		ServiceName: syncer.NegSyncerKey.Name,
 		Port:        fmt.Sprint(syncer.NegSyncerKey.PortTuple.Port),
 	}
-	actualNegDesc, err := utils.NegDescriptionFromString(desc)
+	actualNegDesc, err := negtypes.NegDescriptionFromString(desc)
 	if err != nil {
 		t.Errorf("Invalid neg description: %s", err)
 	}
@@ -1457,7 +1457,7 @@ func createNegCR(testNegName string, creationTS metav1.Time, populateInitialized
 	if populateInitialized {
 		conditions = append(conditions, negv1beta1.Condition{
 			Type:               negv1beta1.Initialized,
-			Status:             core.ConditionTrue,
+			Status:             apiv1.ConditionTrue,
 			LastTransitionTime: creationTS,
 			Reason:             negtypes.NegInitializationSuccessful,
 		})
@@ -1465,7 +1465,7 @@ func createNegCR(testNegName string, creationTS metav1.Time, populateInitialized
 	if populateSynced {
 		conditions = append(conditions, negv1beta1.Condition{
 			Type:               negv1beta1.Synced,
-			Status:             core.ConditionTrue,
+			Status:             apiv1.ConditionTrue,
 			LastTransitionTime: creationTS,
 			Reason:             negtypes.NegInitializationSuccessful,
 		})

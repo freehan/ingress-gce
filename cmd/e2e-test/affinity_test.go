@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 	"time"
 
@@ -31,7 +32,6 @@ import (
 	"k8s.io/ingress-gce/pkg/e2e/adapter"
 	"k8s.io/ingress-gce/pkg/fuzz"
 	"k8s.io/ingress-gce/pkg/fuzz/features"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 const (
@@ -320,7 +320,7 @@ func TestILBSA(t *testing.T) {
 
 func verifyAffinity(t *testing.T, gclb *fuzz.GCLB, svcNamespace, svcName string, expect string, ttl int64) error {
 	for _, bs := range gclb.BackendService {
-		desc := utils.DescriptionFromString(bs.Beta.Description)
+		desc := types.DescriptionFromString(bs.Beta.Description)
 		if desc.ServiceName != fmt.Sprintf("%s/%s", svcNamespace, svcName) {
 			continue
 		}

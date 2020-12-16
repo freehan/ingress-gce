@@ -17,10 +17,10 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
@@ -28,7 +28,7 @@ import (
 // specified in the ServicePort.BackendConfig and applies it to the BackendService.
 // It returns true if there were existing settings on the BackendService
 // that were overwritten.
-func EnsureAffinity(sp utils.ServicePort, be *composite.BackendService) bool {
+func EnsureAffinity(sp types.ServicePort, be *composite.BackendService) bool {
 	if sp.BackendConfig.Spec.SessionAffinity == nil {
 		return false
 	}
@@ -45,7 +45,7 @@ func EnsureAffinity(sp utils.ServicePort, be *composite.BackendService) bool {
 // applyAffinitySettings applies the session affinity settings specified in the
 // BackendConfig to the passed in composite.BackendService. A GCE API call still
 // needs to be made to actually persist the changes.
-func applyAffinitySettings(sp utils.ServicePort, be *composite.BackendService) {
+func applyAffinitySettings(sp types.ServicePort, be *composite.BackendService) {
 	be.SessionAffinity = sp.BackendConfig.Spec.SessionAffinity.AffinityType
 	if sp.BackendConfig.Spec.SessionAffinity.AffinityCookieTtlSec != nil {
 		be.AffinityCookieTtlSec = *sp.BackendConfig.Spec.SessionAffinity.AffinityCookieTtlSec

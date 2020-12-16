@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -28,7 +29,6 @@ import (
 	"k8s.io/ingress-gce/pkg/e2e/adapter"
 	"k8s.io/ingress-gce/pkg/fuzz"
 	"k8s.io/ingress-gce/pkg/fuzz/features"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 const GLBDefaultTimeout int64 = 30
@@ -218,7 +218,7 @@ func TestILBCT(t *testing.T) {
 
 func verifyTimeout(t *testing.T, gclb *fuzz.GCLB, svcNamespace, svcName string, expectedTimeout int64) error {
 	for _, bs := range gclb.BackendService {
-		desc := utils.DescriptionFromString(bs.GA.Description)
+		desc := types.DescriptionFromString(bs.GA.Description)
 		if desc.ServiceName != fmt.Sprintf("%s/%s", svcNamespace, svcName) {
 			continue
 		}

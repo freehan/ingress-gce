@@ -18,6 +18,7 @@ package whitebox
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	"k8s.io/api/networking/v1beta1"
 	frontendconfig "k8s.io/ingress-gce/pkg/apis/frontendconfig/v1beta1"
@@ -27,7 +28,7 @@ import (
 
 // Implements a whitebox test to check that the GCLB has the expected number of BackendService's.
 type numBackendServicesTest struct {
-	uniqSvcPorts map[utils.ServicePortID]bool
+	uniqSvcPorts map[types.ServicePortID]bool
 }
 
 // Name implements WhiteboxTest.
@@ -38,14 +39,14 @@ func (t *numBackendServicesTest) Name() string {
 
 // Test implements WhiteboxTest.
 func (t *numBackendServicesTest) Test(ing *v1beta1.Ingress, fc *frontendconfig.FrontendConfig, gclb *fuzz.GCLB) error {
-	t.uniqSvcPorts = make(map[utils.ServicePortID]bool)
+	t.uniqSvcPorts = make(map[types.ServicePortID]bool)
 	expectedBackendServices := 0
 
 	if ing.Spec.Backend == nil {
 		expectedBackendServices++
 	}
 
-	utils.TraverseIngressBackends(ing, func(id utils.ServicePortID) bool {
+	utils.TraverseIngressBackends(ing, func(id types.ServicePortID) bool {
 		if _, ok := t.uniqSvcPorts[id]; !ok {
 			expectedBackendServices++
 			t.uniqSvcPorts[id] = true

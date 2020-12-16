@@ -19,6 +19,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	compute "google.golang.org/api/compute/v1"
 	api_v1 "k8s.io/api/core/v1"
@@ -46,12 +47,12 @@ func setInstanceGroupsAnnotation(existing map[string]string, igs []*compute.Inst
 }
 
 // uniq returns an array of unique service ports from the given array.
-func uniq(svcPorts []utils.ServicePort) []utils.ServicePort {
-	portMap := map[string]utils.ServicePort{}
+func uniq(svcPorts []types.ServicePort) []types.ServicePort {
+	portMap := map[string]types.ServicePort{}
 	for _, p := range svcPorts {
 		portMap[fmt.Sprintf("%q-%d", p.ID.Service.String(), p.Port)] = p
 	}
-	svcPorts = make([]utils.ServicePort, 0, len(portMap))
+	svcPorts = make([]types.ServicePort, 0, len(portMap))
 	for _, sp := range portMap {
 		svcPorts = append(svcPorts, sp)
 	}
@@ -77,7 +78,7 @@ func convert(ings []*v1beta1.Ingress) (retVal []interface{}) {
 
 // nodePorts returns the list of uniq NodePort from the input ServicePorts.
 // Only NonNEG service backend need NodePort.
-func nodePorts(svcPorts []utils.ServicePort) []int64 {
+func nodePorts(svcPorts []types.ServicePort) []int64 {
 	ports := []int64{}
 	for _, p := range uniq(svcPorts) {
 		if !p.NEGEnabled {

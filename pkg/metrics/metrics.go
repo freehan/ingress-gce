@@ -18,6 +18,7 @@ package metrics
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"sync"
 	"time"
 
@@ -25,7 +26,6 @@ import (
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	frontendconfigv1beta1 "k8s.io/ingress-gce/pkg/apis/frontendconfig/v1beta1"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
@@ -88,7 +88,7 @@ func init() {
 }
 
 // NewIngressState returns ingress state for given ingress and service ports.
-func NewIngressState(ing *v1beta1.Ingress, fc *frontendconfigv1beta1.FrontendConfig, svcPorts []utils.ServicePort) IngressState {
+func NewIngressState(ing *v1beta1.Ingress, fc *frontendconfigv1beta1.FrontendConfig, svcPorts []types.ServicePort) IngressState {
 	return IngressState{ingress: ing, frontendconfig: fc, servicePorts: svcPorts}
 }
 
@@ -124,11 +124,11 @@ func NewControllerMetrics() *ControllerMetrics {
 // servicePortKey defines a service port uniquely.
 // Note that same service port combination used by ILB and XLB are treated as separate service ports.
 type servicePortKey struct {
-	svcPortID      utils.ServicePortID
+	svcPortID      types.ServicePortID
 	isL7ILBEnabled bool
 }
 
-func newServicePortKey(svcPort utils.ServicePort) servicePortKey {
+func newServicePortKey(svcPort types.ServicePort) servicePortKey {
 	return servicePortKey{svcPortID: svcPort.ID, isL7ILBEnabled: svcPort.L7ILBEnabled}
 }
 

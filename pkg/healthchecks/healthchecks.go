@@ -18,6 +18,7 @@ package healthchecks
 
 import (
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"strings"
 
@@ -53,7 +54,7 @@ func NewHealthChecker(cloud HealthCheckProvider, healthCheckPath string, default
 }
 
 // new returns a *HealthCheck with default settings and specified port/protocol
-func (h *HealthChecks) new(sp utils.ServicePort) *translator.HealthCheck {
+func (h *HealthChecks) new(sp types2.ServicePort) *translator.HealthCheck {
 	var hc *translator.HealthCheck
 	if sp.NEGEnabled && !sp.L7ILBEnabled {
 		hc = translator.DefaultNEGHealthCheck(sp.Protocol)
@@ -71,7 +72,7 @@ func (h *HealthChecks) new(sp utils.ServicePort) *translator.HealthCheck {
 }
 
 // SyncServicePort implements HealthChecker.
-func (h *HealthChecks) SyncServicePort(sp *utils.ServicePort, probe *v1.Probe) (string, error) {
+func (h *HealthChecks) SyncServicePort(sp *types2.ServicePort, probe *v1.Probe) (string, error) {
 	hc := h.new(*sp)
 	if probe != nil {
 		klog.V(2).Infof("Applying httpGet settings of readinessProbe to health check on port %+v", sp)
@@ -359,7 +360,7 @@ func (h *HealthChecks) Get(name string, version meta.Version, scope meta.KeyType
 
 // pathFromSvcPort returns the default path for a health check based on whether
 // the passed in ServicePort is associated with the system default backend.
-func (h *HealthChecks) pathFromSvcPort(sp utils.ServicePort) string {
+func (h *HealthChecks) pathFromSvcPort(sp types2.ServicePort) string {
 	if h.defaultBackendSvc == sp.ID.Service {
 		return flags.F.DefaultSvcHealthCheckPath
 	}

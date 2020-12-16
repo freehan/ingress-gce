@@ -2,6 +2,7 @@ package operator
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	"k8s.io/ingress-gce/pkg/utils"
@@ -66,7 +67,7 @@ func doesIngressReferenceService(ing *v1beta1.Ingress, svc *api_v1.Service) bool
 	}
 
 	doesReference := false
-	utils.TraverseIngressBackends(ing, func(id utils.ServicePortID) bool {
+	utils.TraverseIngressBackends(ing, func(id types.ServicePortID) bool {
 		if id.Service.Name == svc.Name {
 			doesReference = true
 			return true

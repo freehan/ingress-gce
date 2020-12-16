@@ -17,17 +17,17 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
 // EnsureCDN reads the CDN configuration specified in the ServicePort.BackendConfig
 // and applies it to the BackendService. It returns true if there were existing
 // settings on the BackendService that were overwritten.
-func EnsureCDN(sp utils.ServicePort, be *composite.BackendService) bool {
+func EnsureCDN(sp types.ServicePort, be *composite.BackendService) bool {
 	if sp.BackendConfig.Spec.Cdn == nil {
 		return false
 	}
@@ -45,7 +45,7 @@ func EnsureCDN(sp utils.ServicePort, be *composite.BackendService) bool {
 // applyCDNSettings applies the CDN settings specified in the BackendConfig
 // to the passed in compute.BackendService. A GCE API call still needs to be
 // made to actually persist the changes.
-func applyCDNSettings(sp utils.ServicePort, be *composite.BackendService) {
+func applyCDNSettings(sp types.ServicePort, be *composite.BackendService) {
 	beConfig := sp.BackendConfig
 	// Apply the boolean switch
 	be.EnableCDN = beConfig.Spec.Cdn.Enabled

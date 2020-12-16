@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 	"strconv"
 	"strings"
@@ -46,7 +47,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/ingress-gce/pkg/annotations"
-	"k8s.io/ingress-gce/pkg/flags"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
 	svcnegclient "k8s.io/ingress-gce/pkg/svcneg/client/clientset/versioned"
 	"k8s.io/ingress-gce/pkg/utils"
@@ -61,8 +61,8 @@ const (
 )
 
 var (
-	defaultBackend = utils.ServicePort{
-		ID: utils.ServicePortID{
+	defaultBackend = types2.ServicePort{
+		ID: types2.ServicePortID{
 			Service: types.NamespacedName{
 				Name:      "default-http-backend",
 				Namespace: "kube-system",
@@ -376,7 +376,6 @@ func TestEnableNEGServiceWithL4ILB(t *testing.T) {
 // TestEnableNEGServiceWithILBIngress tests ILB service with NEG enabled
 func TestEnableNEGServiceWithILBIngress(t *testing.T) {
 	// Not running in parallel since enabling global flag
-	flags.F.EnableL7Ilb = true
 	controller := newTestController(fake.NewSimpleClientset())
 	defer controller.stop()
 	controller.serviceLister.Add(newTestService(controller, false, []int32{}))
@@ -663,7 +662,7 @@ func TestDefaultBackendServicePortInfoMapForL7ILB(t *testing.T) {
 		forIlb bool
 		// defaultOverride sets backend to nil
 		defaultOverride                  bool
-		defaultBackendServiceServicePort utils.ServicePort
+		defaultBackendServiceServicePort types2.ServicePort
 		want                             negtypes.PortInfoMap
 	}{
 		{
@@ -708,8 +707,8 @@ func TestDefaultBackendServicePortInfoMapForL7ILB(t *testing.T) {
 			ingName:         "ingress-name-5",
 			forIlb:          true,
 			defaultOverride: true,
-			defaultBackendServiceServicePort: utils.ServicePort{
-				ID: utils.ServicePortID{
+			defaultBackendServiceServicePort: types2.ServicePort{
+				ID: types2.ServicePortID{
 					Service: types.NamespacedName{
 						Namespace: testServiceNamespace, Name: "newDefaultBackend",
 					},

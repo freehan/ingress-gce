@@ -19,6 +19,7 @@ package loadbalancers
 import (
 	"encoding/json"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"strings"
 
 	"k8s.io/ingress-gce/pkg/flags"
@@ -64,7 +65,7 @@ type L7RuntimeInfo struct {
 	// The name of the static IP subnet, this is only used for L7-ILB Ingress static IPs
 	StaticIPSubnet string
 	// UrlMap is our internal representation of a url map.
-	UrlMap *utils.GCEURLMap
+	UrlMap *types2.GCEURLMap
 	// FrontendConfig is the type which encapsulates features for the load balancer.
 	FrontendConfig *frontendconfigv1beta1.FrontendConfig
 }

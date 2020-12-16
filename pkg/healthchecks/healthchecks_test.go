@@ -19,6 +19,7 @@ package healthchecks
 import (
 	"context"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"reflect"
 	"testing"
@@ -48,7 +49,7 @@ import (
 
 var (
 	testNamer         = namer_util.NewNamer("uid1", "fw1")
-	testSPs           = map[string]*utils.ServicePort{}
+	testSPs           = map[string]*types2.ServicePort{}
 	defaultBackendSvc = types.NamespacedName{Namespace: "system", Name: "default"}
 )
 
@@ -61,7 +62,7 @@ func init() {
 
 	// Generate many types of ServicePorts.
 	// Example: sps["HTTP-8000-neg-nil"] is a ServicePort for HTTP with NEG-enabled.
-	testSPs = map[string]*utils.ServicePort{}
+	testSPs = map[string]*types2.ServicePort{}
 	for _, p := range []annotations.AppProtocol{
 		annotations.ProtocolHTTP,
 		annotations.ProtocolHTTPS,
@@ -84,7 +85,7 @@ func init() {
 						Port:               &num,
 					},
 				} {
-					sp := &utils.ServicePort{
+					sp := &types2.ServicePort{
 						NodePort:     np,
 						Protocol:     p,
 						BackendNamer: testNamer,
@@ -113,7 +114,7 @@ func TestHealthCheckAdd(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	healthChecks := NewHealthChecker(fakeGCE, "/", defaultBackendSvc)
 
-	sp := &utils.ServicePort{NodePort: 80, Protocol: annotations.ProtocolHTTP, NEGEnabled: false, BackendNamer: testNamer}
+	sp := &types2.ServicePort{NodePort: 80, Protocol: annotations.ProtocolHTTP, NEGEnabled: false, BackendNamer: testNamer}
 	_, err := healthChecks.SyncServicePort(sp, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -124,7 +125,7 @@ func TestHealthCheckAdd(t *testing.T) {
 		t.Fatalf("expected the health check to exist, err: %v", err)
 	}
 
-	sp = &utils.ServicePort{NodePort: 443, Protocol: annotations.ProtocolHTTPS, NEGEnabled: false, BackendNamer: testNamer}
+	sp = &types2.ServicePort{NodePort: 443, Protocol: annotations.ProtocolHTTPS, NEGEnabled: false, BackendNamer: testNamer}
 	_, err = healthChecks.SyncServicePort(sp, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -135,7 +136,7 @@ func TestHealthCheckAdd(t *testing.T) {
 		t.Fatalf("expected the health check to exist, err: %v", err)
 	}
 
-	sp = &utils.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP2, NEGEnabled: false, BackendNamer: testNamer}
+	sp = &types2.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP2, NEGEnabled: false, BackendNamer: testNamer}
 	_, err = healthChecks.SyncServicePort(sp, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -162,7 +163,7 @@ func TestHealthCheckAddExisting(t *testing.T) {
 	}
 	fakeGCE.CreateHealthCheck(v1hc)
 
-	sp := &utils.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP, NEGEnabled: false, BackendNamer: testNamer}
+	sp := &types2.ServicePort{NodePort: 3000, Protocol: annotations.ProtocolHTTP, NEGEnabled: false, BackendNamer: testNamer}
 	// Should not fail adding the same type of health check
 	_, err = healthChecks.SyncServicePort(sp, nil)
 	if err != nil {
@@ -185,7 +186,7 @@ func TestHealthCheckAddExisting(t *testing.T) {
 	}
 	fakeGCE.CreateHealthCheck(v1hc)
 
-	sp = &utils.ServicePort{NodePort: 4000, Protocol: annotations.ProtocolHTTPS, NEGEnabled: false, BackendNamer: testNamer}
+	sp = &types2.ServicePort{NodePort: 4000, Protocol: annotations.ProtocolHTTPS, NEGEnabled: false, BackendNamer: testNamer}
 	_, err = healthChecks.SyncServicePort(sp, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -207,7 +208,7 @@ func TestHealthCheckAddExisting(t *testing.T) {
 	}
 	fakeGCE.CreateHealthCheck(v1hc)
 
-	sp = &utils.ServicePort{NodePort: 5000, Protocol: annotations.ProtocolHTTPS, NEGEnabled: false, BackendNamer: testNamer}
+	sp = &types2.ServicePort{NodePort: 5000, Protocol: annotations.ProtocolHTTPS, NEGEnabled: false, BackendNamer: testNamer}
 	_, err = healthChecks.SyncServicePort(sp, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -278,8 +279,8 @@ func TestRegionalHealthCheckDelete(t *testing.T) {
 	healthChecks := NewHealthChecker(fakeGCE, "/", defaultBackendSvc)
 
 	hc := healthChecks.new(
-		utils.ServicePort{
-			ID: utils.ServicePortID{
+		types2.ServicePort{
+			ID: types2.ServicePortID{
 				Service: types.NamespacedName{
 					Namespace: "ns2",
 					Name:      "svc2",
@@ -867,7 +868,7 @@ func TestSyncServicePort(t *testing.T) {
 	type tc struct {
 		desc     string
 		setup    func(*cloud.MockGCE)
-		sp       *utils.ServicePort
+		sp       *types2.ServicePort
 		probe    *v1.Probe
 		regional bool
 
@@ -967,7 +968,7 @@ func TestSyncServicePort(t *testing.T) {
 	chc.HttpHealthCheck.Port = 1234
 	// PortSpecification is set by the controller
 	chc.HttpHealthCheck.PortSpecification = "USE_FIXED_PORT"
-	sp := utils.ServicePort{
+	sp := types2.ServicePort{
 		NodePort:      80,
 		Protocol:      annotations.ProtocolHTTP,
 		BackendNamer:  testNamer,

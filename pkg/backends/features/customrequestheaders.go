@@ -16,17 +16,17 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"reflect"
 
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
 // EnsureCustomRequestHeaders reads the CustomRequestHeaders configuration specified in the ServicePort.BackendConfig
 // and applies it to the BackendService. It returns true if there were existing
 // settings on the BackendService that were overwritten.
-func EnsureCustomRequestHeaders(sp utils.ServicePort, be *composite.BackendService) bool {
+func EnsureCustomRequestHeaders(sp types.ServicePort, be *composite.BackendService) bool {
 	if sp.BackendConfig.Spec.CustomRequestHeaders == nil {
 		return false
 	}
@@ -44,6 +44,6 @@ func EnsureCustomRequestHeaders(sp utils.ServicePort, be *composite.BackendServi
 // applyCustomRequestHeaders applies the CustomRequestHeaders settings specified in the BackendConfig
 // to the passed in composite.BackendService. A GCE API call still needs to be made
 // to actually persist the changes.
-func applyCustomRequestHeaders(sp utils.ServicePort, be *composite.BackendService) {
+func applyCustomRequestHeaders(sp types.ServicePort, be *composite.BackendService) {
 	be.CustomRequestHeaders = sp.BackendConfig.Spec.CustomRequestHeaders.Headers
 }

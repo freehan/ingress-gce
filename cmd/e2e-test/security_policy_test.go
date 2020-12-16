@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"strings"
 	"testing"
 	"time"
@@ -35,7 +36,6 @@ import (
 	"k8s.io/ingress-gce/pkg/e2e"
 	"k8s.io/ingress-gce/pkg/fuzz"
 	"k8s.io/ingress-gce/pkg/fuzz/features"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 const (
@@ -298,7 +298,7 @@ func verifySecurityPolicy(t *testing.T, gclb *fuzz.GCLB, svcNamespace, svcName, 
 	numBsWithPolicy := 0
 	for _, bs := range gclb.BackendService {
 		// Check on relevant backend services.
-		desc := utils.DescriptionFromString(bs.GA.Description)
+		desc := types.DescriptionFromString(bs.GA.Description)
 		if desc.ServiceName != fmt.Sprintf("%s/%s", svcNamespace, svcName) {
 			continue
 		}

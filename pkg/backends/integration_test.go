@@ -19,6 +19,7 @@ package backends
 import (
 	"context"
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
@@ -69,13 +70,13 @@ func TestBackendInstanceGroupClobbering(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	jig := newTestJig(fakeGCE)
 
-	sp := utils.ServicePort{NodePort: 80, BackendNamer: defaultNamer}
+	sp := types.ServicePort{NodePort: 80, BackendNamer: defaultNamer}
 	_, err := jig.fakeInstancePool.EnsureInstanceGroupsAndPorts(defaultNamer.InstanceGroup(), []int64{sp.NodePort})
 	if err != nil {
 		t.Fatalf("Did not expect error when ensuring IG for ServicePort %+v: %v", sp, err)
 	}
 
-	if err := jig.syncer.Sync([]utils.ServicePort{sp}); err != nil {
+	if err := jig.syncer.Sync([]types.ServicePort{sp}); err != nil {
 		t.Fatalf("Did not expect error when syncing backend with port %v", sp.NodePort)
 	}
 	if err := jig.linker.Link(sp, []GroupKey{{Zone: defaultZone}}); err != nil {
@@ -103,7 +104,7 @@ func TestBackendInstanceGroupClobbering(t *testing.T) {
 		t.Fatalf("Did not expect error when ensuring IG for ServicePort %+v: %v", sp, err)
 	}
 
-	if err := jig.syncer.Sync([]utils.ServicePort{sp}); err != nil {
+	if err := jig.syncer.Sync([]types.ServicePort{sp}); err != nil {
 		t.Fatalf("Did not expect error when syncing backend with port %v", sp.NodePort)
 	}
 	if err := jig.linker.Link(sp, []GroupKey{{Zone: defaultZone}}); err != nil {
@@ -141,14 +142,14 @@ func TestSyncChaosMonkey(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	jig := newTestJig(fakeGCE)
 
-	sp := utils.ServicePort{NodePort: 8080, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
+	sp := types.ServicePort{NodePort: 8080, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
 
 	_, err := jig.fakeInstancePool.EnsureInstanceGroupsAndPorts(defaultNamer.InstanceGroup(), []int64{sp.NodePort})
 	if err != nil {
 		t.Fatalf("Did not expect error when ensuring IG for ServicePort %+v, err %v", sp, err)
 	}
 
-	if err := jig.syncer.Sync([]utils.ServicePort{sp}); err != nil {
+	if err := jig.syncer.Sync([]types.ServicePort{sp}); err != nil {
 		t.Fatalf("Did not expect error when syncing backend with port %v, err: %v", sp.NodePort, err)
 	}
 	if err := jig.linker.Link(sp, []GroupKey{{Zone: defaultZone}}); err != nil {
@@ -181,7 +182,7 @@ func TestSyncChaosMonkey(t *testing.T) {
 		t.Fatalf("Did not expect error when ensuring IG for ServicePort %+v: %v", sp, err)
 	}
 
-	if err := jig.syncer.Sync([]utils.ServicePort{sp}); err != nil {
+	if err := jig.syncer.Sync([]types.ServicePort{sp}); err != nil {
 		t.Fatalf("Did not expect error when syncing backend with port %v", sp.NodePort)
 	}
 	if err := jig.linker.Link(sp, []GroupKey{{Zone: defaultZone}}); err != nil {

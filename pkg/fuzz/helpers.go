@@ -18,6 +18,7 @@ package fuzz
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/shared"
 	"strconv"
 	"strings"
 
@@ -29,7 +30,6 @@ import (
 	backendconfig "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	frontendconfig "k8s.io/ingress-gce/pkg/apis/frontendconfig/v1beta1"
 	backendconfigutil "k8s.io/ingress-gce/pkg/backendconfig"
-	translatorutil "k8s.io/ingress-gce/pkg/controller/translator"
 )
 
 // ServiceForPath returns the Service and ServicePort associated with the given path.
@@ -51,7 +51,7 @@ func ServiceForPath(host, path string, ing *v1beta1.Ingress, env ValidatorEnv) (
 	if !ok {
 		return nil, nil, fmt.Errorf("service %q not found in environment", b.ServiceName)
 	}
-	servicePort := translatorutil.ServicePort(*service, b.ServicePort)
+	servicePort := shared.ServicePort(*service, b.ServicePort)
 	if servicePort == nil {
 		return nil, nil, fmt.Errorf("port %+v in Service %q not found", b.ServicePort, b.ServiceName)
 	}

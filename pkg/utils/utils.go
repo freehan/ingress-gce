@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"sort"
 	"strconv"
@@ -438,13 +439,13 @@ func JoinErrs(errs []error) error {
 
 // TraverseIngressBackends traverse thru all backends specified in the input ingress and call process
 // If process return true, then return and stop traversing the backends
-func TraverseIngressBackends(ing *v1beta1.Ingress, process func(id ServicePortID) bool) {
+func TraverseIngressBackends(ing *v1beta1.Ingress, process func(id types2.ServicePortID) bool) {
 	if ing == nil {
 		return
 	}
 	// Check service of default backend
 	if ing.Spec.Backend != nil {
-		if process(ServicePortID{Service: types.NamespacedName{Namespace: ing.Namespace, Name: ing.Spec.Backend.ServiceName}, Port: ing.Spec.Backend.ServicePort}) {
+		if process(types2.ServicePortID{Service: types.NamespacedName{Namespace: ing.Namespace, Name: ing.Spec.Backend.ServiceName}, Port: ing.Spec.Backend.ServicePort}) {
 			return
 		}
 	}
@@ -455,7 +456,7 @@ func TraverseIngressBackends(ing *v1beta1.Ingress, process func(id ServicePortID
 			continue
 		}
 		for _, p := range rule.IngressRuleValue.HTTP.Paths {
-			if process(ServicePortID{Service: types.NamespacedName{Namespace: ing.Namespace, Name: p.Backend.ServiceName}, Port: p.Backend.ServicePort}) {
+			if process(types2.ServicePortID{Service: types.NamespacedName{Namespace: ing.Namespace, Name: p.Backend.ServiceName}, Port: p.Backend.ServicePort}) {
 				return
 			}
 		}

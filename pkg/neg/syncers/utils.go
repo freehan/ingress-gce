@@ -129,13 +129,13 @@ func ensureNetworkEndpointGroup(svcNamespace, svcName, negName, zone, negService
 	if neg == nil {
 		needToCreate = true
 	} else {
-		expectedDesc := utils.NegDescription{
+		expectedDesc := negtypes.NegDescription{
 			ClusterUID:  kubeSystemUID,
 			Namespace:   svcNamespace,
 			ServiceName: svcName,
 			Port:        port,
 		}
-		if matches, err := utils.VerifyDescription(expectedDesc, neg.Description, negName, zone); !matches {
+		if matches, err := negtypes.VerifyDescription(expectedDesc, neg.Description, negName, zone); !matches {
 			klog.Errorf("Neg Name %s is already in use: %s", negName, err)
 			return negv1beta1.NegObjectReference{}, fmt.Errorf("neg name %s is already in use, found conflicting description: %s", negName, err)
 		}
@@ -171,7 +171,7 @@ func ensureNetworkEndpointGroup(svcNamespace, svcName, negName, zone, negService
 		}
 
 		desc := ""
-		negDesc := utils.NegDescription{
+		negDesc := negtypes.NegDescription{
 			ClusterUID:  kubeSystemUID,
 			Namespace:   svcNamespace,
 			ServiceName: svcName,

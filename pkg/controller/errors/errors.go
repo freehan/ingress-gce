@@ -18,13 +18,13 @@ package errors
 
 import (
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"k8s.io/ingress-gce/pkg/annotations"
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 // ErrBadSvcType is returned when the service is not NodePort or LoadBalancer.
@@ -50,7 +50,7 @@ func (e ErrSvcNotFound) Error() string {
 
 // ErrSvcPortNotFound is returned when a service's port is not found.
 type ErrSvcPortNotFound struct {
-	utils.ServicePortID
+	types2.ServicePortID
 }
 
 // Error returns the port name/number of the service which is not found.
@@ -72,7 +72,7 @@ func (e ErrSvcAppProtosParsing) Error() string {
 // ErrSvcBackendConfig is returned when there was an error getting the
 // BackendConfig for a service port.
 type ErrSvcBackendConfig struct {
-	utils.ServicePortID
+	types2.ServicePortID
 	Err error
 }
 

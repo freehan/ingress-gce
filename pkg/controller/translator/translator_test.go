@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 	"time"
 
@@ -35,14 +36,13 @@ import (
 	backendconfigclient "k8s.io/ingress-gce/pkg/backendconfig/client/clientset/versioned/fake"
 	"k8s.io/ingress-gce/pkg/context"
 	"k8s.io/ingress-gce/pkg/test"
-	"k8s.io/ingress-gce/pkg/utils"
 	namer_util "k8s.io/ingress-gce/pkg/utils/namer"
 )
 
 var (
 	firstPodCreationTime = time.Date(2006, 01, 02, 15, 04, 05, 0, time.UTC)
-	defaultBackend       = utils.ServicePort{
-		ID: utils.ServicePortID{
+	defaultBackend       = types2.ServicePort{
+		ID: types2.ServicePortID{
 			Service: types.NamespacedName{
 				Name:      "default-http-backend",
 				Namespace: "kube-system",
@@ -100,7 +100,7 @@ func TestTranslateIngress(t *testing.T) {
 		desc          string
 		ing           *v1beta1.Ingress
 		wantErrCount  int
-		wantGCEURLMap *utils.GCEURLMap
+		wantGCEURLMap *types2.GCEURLMap
 	}{
 		{
 			desc: "default backend only",
@@ -109,13 +109,13 @@ func TestTranslateIngress(t *testing.T) {
 					Backend: test.Backend("first-service", intstr.FromInt(80)),
 				}),
 			wantErrCount:  0,
-			wantGCEURLMap: &utils.GCEURLMap{DefaultBackend: &utils.ServicePort{ID: utils.ServicePortID{Service: types.NamespacedName{Name: "first-service", Namespace: "default"}, Port: intstr.FromInt(80)}}},
+			wantGCEURLMap: &types2.GCEURLMap{DefaultBackend: &types2.ServicePort{ID: types2.ServicePortID{Service: types.NamespacedName{Name: "first-service", Namespace: "default"}, Port: intstr.FromInt(80)}}},
 		},
 		{
 			desc:          "no backend",
 			ing:           test.NewIngress(types.NamespacedName{Name: "my-ingress", Namespace: "default"}, v1beta1.IngressSpec{}),
 			wantErrCount:  0,
-			wantGCEURLMap: &utils.GCEURLMap{DefaultBackend: &utils.ServicePort{ID: utils.ServicePortID{Service: types.NamespacedName{Name: "default-http-backend", Namespace: "kube-system"}, Port: intstr.FromString("http")}}},
+			wantGCEURLMap: &types2.GCEURLMap{DefaultBackend: &types2.ServicePort{ID: types2.ServicePortID{Service: types.NamespacedName{Name: "default-http-backend", Namespace: "kube-system"}, Port: intstr.FromString("http")}}},
 		},
 		{
 			desc:          "no host",
@@ -166,7 +166,7 @@ func TestTranslateIngress(t *testing.T) {
 					Backend: test.Backend("random-service", intstr.FromInt(80)),
 				}),
 			wantErrCount:  1,
-			wantGCEURLMap: utils.NewGCEURLMap(),
+			wantGCEURLMap: types2.NewGCEURLMap(),
 		},
 	}
 
@@ -178,7 +178,7 @@ func TestTranslateIngress(t *testing.T) {
 			}
 
 			// Check that the GCEURLMaps point to the same ServicePortIDs.
-			if !utils.EqualMapping(gotGCEURLMap, tc.wantGCEURLMap) {
+			if !types2.EqualMapping(gotGCEURLMap, tc.wantGCEURLMap) {
 				t.Errorf("%s: TranslateIngress() = %+v\nwant\n%+v", tc.desc, gotGCEURLMap.String(), tc.wantGCEURLMap.String())
 			}
 		})
@@ -190,7 +190,7 @@ func TestGetServicePort(t *testing.T) {
 		desc        string
 		spec        apiv1.ServiceSpec
 		annotations map[string]string
-		id          utils.ServicePortID
+		id          types2.ServicePortID
 		wantErr     bool
 		wantPort    bool
 		params      getServicePortParams
@@ -201,7 +201,7 @@ func TestGetServicePort(t *testing.T) {
 				Type:  apiv1.ServiceTypeClusterIP,
 				Ports: []apiv1.ServicePort{{Name: "http", Port: 80}},
 			},
-			id:       utils.ServicePortID{Port: intstr.FromString("http")},
+			id:       types2.ServicePortID{Port: intstr.FromString("http")},
 			wantErr:  true,
 			wantPort: false,
 		},
@@ -211,7 +211,7 @@ func TestGetServicePort(t *testing.T) {
 				Type:  apiv1.ServiceTypeNodePort,
 				Ports: []apiv1.ServicePort{{Name: "http", Port: 80}},
 			},
-			id:       utils.ServicePortID{Port: intstr.FromString("badport")},
+			id:       types2.ServicePortID{Port: intstr.FromString("badport")},
 			wantErr:  true,
 			wantPort: false,
 		},
@@ -224,7 +224,7 @@ func TestGetServicePort(t *testing.T) {
 			annotations: map[string]string{
 				"service.alpha.kubernetes.io/app-protocols": "bad-string",
 			},
-			id:       utils.ServicePortID{Port: intstr.FromString("http")},
+			id:       types2.ServicePortID{Port: intstr.FromString("http")},
 			wantErr:  true,
 			wantPort: true,
 		},
@@ -261,7 +261,7 @@ func TestGetServicePortWithBackendConfigEnabled(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		annotations map[string]string
-		id          utils.ServicePortID
+		id          types2.ServicePortID
 		wantErr     bool
 		wantPort    bool
 		params      getServicePortParams
@@ -271,14 +271,14 @@ func TestGetServicePortWithBackendConfigEnabled(t *testing.T) {
 			annotations: map[string]string{
 				annotations.BackendConfigKey: `{"ports":{"https":"config-https"}}`,
 			},
-			id:       utils.ServicePortID{Port: intstr.FromString("https")},
+			id:       types2.ServicePortID{Port: intstr.FromString("https")},
 			wantErr:  true,
 			wantPort: true,
 		},
 		{
 			desc:        "no backend config annotation",
 			annotations: nil,
-			id:          utils.ServicePortID{Port: intstr.FromString("http")},
+			id:          types2.ServicePortID{Port: intstr.FromString("http")},
 			wantErr:     false,
 			wantPort:    true,
 		},
@@ -287,7 +287,7 @@ func TestGetServicePortWithBackendConfigEnabled(t *testing.T) {
 			annotations: map[string]string{
 				annotations.BackendConfigKey: `{"ports":{"https":"config-https"}}`,
 			},
-			id:       utils.ServicePortID{Port: intstr.FromString("http")},
+			id:       types2.ServicePortID{Port: intstr.FromString("http")},
 			wantErr:  false,
 			wantPort: true,
 		},
@@ -296,7 +296,7 @@ func TestGetServicePortWithBackendConfigEnabled(t *testing.T) {
 			annotations: map[string]string{
 				annotations.BackendConfigKey: `{"ports":{"http":"config-http"}}`,
 			},
-			id:       utils.ServicePortID{Port: intstr.FromString("http")},
+			id:       types2.ServicePortID{Port: intstr.FromString("http")},
 			wantErr:  false,
 			wantPort: true,
 		},
@@ -330,12 +330,12 @@ func TestGetServicePortWithBackendConfigEnabled(t *testing.T) {
 
 func TestGetProbe(t *testing.T) {
 	translator := fakeTranslator()
-	nodePortToHealthCheck := map[utils.ServicePort]string{
+	nodePortToHealthCheck := map[types2.ServicePort]string{
 		{NodePort: 3001, Protocol: annotations.ProtocolHTTP}:  "/healthz",
 		{NodePort: 3002, Protocol: annotations.ProtocolHTTPS}: "/foo",
 		{NodePort: 3003, Protocol: annotations.ProtocolHTTP2}: "/http2-check",
 		{NodePort: 0, Protocol: annotations.ProtocolHTTPS, NEGEnabled: true,
-			ID: utils.ServicePortID{Service: types.NamespacedName{Name: "svc0", Namespace: apiv1.NamespaceDefault}}}: "/bar",
+			ID: types2.ServicePortID{Service: types.NamespacedName{Name: "svc0", Namespace: apiv1.NamespaceDefault}}}: "/bar",
 	}
 	for _, svc := range makeServices(nodePortToHealthCheck, apiv1.NamespaceDefault) {
 		translator.ctx.ServiceInformer.GetIndexer().Add(svc)
@@ -356,7 +356,7 @@ func TestGetProbe(t *testing.T) {
 
 func TestGetProbeNamedPort(t *testing.T) {
 	translator := fakeTranslator()
-	nodePortToHealthCheck := map[utils.ServicePort]string{
+	nodePortToHealthCheck := map[types2.ServicePort]string{
 		{NodePort: 3001, Protocol: annotations.ProtocolHTTP}: "/healthz",
 	}
 	for _, svc := range makeServices(nodePortToHealthCheck, apiv1.NamespaceDefault) {
@@ -411,7 +411,7 @@ func TestGetProbeCrossNamespace(t *testing.T) {
 		},
 	}
 	translator.ctx.PodInformer.GetIndexer().Add(firstPod)
-	nodePortToHealthCheck := map[utils.ServicePort]string{
+	nodePortToHealthCheck := map[types2.ServicePort]string{
 		{NodePort: 3001, Protocol: annotations.ProtocolHTTP}: "/healthz",
 	}
 	for _, svc := range makeServices(nodePortToHealthCheck, apiv1.NamespaceDefault) {
@@ -451,8 +451,8 @@ func TestPathValidation(t *testing.T) {
 	})
 	svcLister.Add(svc)
 
-	expectedBackend := &utils.ServicePort{
-		ID: utils.ServicePortID{
+	expectedBackend := &types2.ServicePort{
+		ID: types2.ServicePortID{
 			Service: types.NamespacedName{Name: "my-service", Namespace: "default"},
 			Port:    intstr.FromInt(80),
 		}}
@@ -595,18 +595,18 @@ func TestPathValidation(t *testing.T) {
 		}
 		ing := test.NewIngress(types.NamespacedName{Name: "my-ingress", Namespace: "default"}, spec)
 
-		expectedGCEURLMap := &utils.GCEURLMap{
-			DefaultBackend: &utils.ServicePort{
-				ID: utils.ServicePortID{Service: types.NamespacedName{Name: "default-http-backend", Namespace: "kube-system"}, Port: intstr.FromString("http")},
+		expectedGCEURLMap := &types2.GCEURLMap{
+			DefaultBackend: &types2.ServicePort{
+				ID: types2.ServicePortID{Service: types.NamespacedName{Name: "default-http-backend", Namespace: "kube-system"}, Port: intstr.FromString("http")},
 			},
 		}
 
-		var expectedPathRules []utils.PathRule
+		var expectedPathRules []types2.PathRule
 		for _, p := range tc.expectedPaths {
-			pathRule := utils.PathRule{Path: p, Backend: *expectedBackend}
+			pathRule := types2.PathRule{Path: p, Backend: *expectedBackend}
 			expectedPathRules = append(expectedPathRules, pathRule)
 		}
-		expectedGCEURLMap.HostRules = []utils.HostRule{{Hostname: hostname, Paths: expectedPathRules}}
+		expectedGCEURLMap.HostRules = []types2.HostRule{{Hostname: hostname, Paths: expectedPathRules}}
 
 		gotGCEURLMap, gotErrs := translator.TranslateIngress(ing, defaultBackend.ID, defaultNamer)
 		if tc.expectValid && len(gotErrs) > 0 {
@@ -616,13 +616,13 @@ func TestPathValidation(t *testing.T) {
 		}
 
 		// Check that the GCEURLMaps have expected host path rules
-		if tc.expectValid && !utils.EqualMapping(gotGCEURLMap, expectedGCEURLMap) {
+		if tc.expectValid && !types2.EqualMapping(gotGCEURLMap, expectedGCEURLMap) {
 			t.Errorf("%s: TranslateIngress() = %+v\nwant\n%+v", tc.desc, gotGCEURLMap.String(), expectedGCEURLMap.String())
 		}
 	}
 }
 
-func makePods(nodePortToHealthCheck map[utils.ServicePort]string, ns string) []*apiv1.Pod {
+func makePods(nodePortToHealthCheck map[types2.ServicePort]string, ns string) []*apiv1.Pod {
 	delay := 1 * time.Minute
 
 	var pods []*apiv1.Pod
@@ -660,7 +660,7 @@ func makePods(nodePortToHealthCheck map[utils.ServicePort]string, ns string) []*
 	return pods
 }
 
-func makeServices(nodePortToHealthCheck map[utils.ServicePort]string, ns string) []*apiv1.Service {
+func makeServices(nodePortToHealthCheck map[types2.ServicePort]string, ns string) []*apiv1.Service {
 	var services []*apiv1.Service
 	for np := range nodePortToHealthCheck {
 		svc := &apiv1.Service{
@@ -696,17 +696,17 @@ func TestGatherEndpointPorts(t *testing.T) {
 	ep1 := "ep1"
 	ep2 := "ep2"
 
-	svcPorts := []utils.ServicePort{
+	svcPorts := []types2.ServicePort{
 		{NodePort: int64(30001)},
 		{NodePort: int64(30002)},
 		{
-			ID:         utils.ServicePortID{Service: types.NamespacedName{Namespace: "ns", Name: ep1}},
+			ID:         types2.ServicePortID{Service: types.NamespacedName{Namespace: "ns", Name: ep1}},
 			NodePort:   int64(30003),
 			NEGEnabled: true,
 			TargetPort: "80",
 		},
 		{
-			ID:         utils.ServicePortID{Service: types.NamespacedName{Namespace: "ns", Name: ep2}},
+			ID:         types2.ServicePortID{Service: types.NamespacedName{Namespace: "ns", Name: ep2}},
 			NodePort:   int64(30004),
 			NEGEnabled: true,
 			TargetPort: "named-port",
@@ -797,12 +797,12 @@ func ingressFromFile(t *testing.T, filename string) *v1beta1.Ingress {
 	return ing
 }
 
-func gceURLMapFromFile(t *testing.T, filename string) *utils.GCEURLMap {
+func gceURLMapFromFile(t *testing.T, filename string) *types2.GCEURLMap {
 	data, err := ioutil.ReadFile("testdata/" + filename)
 	if err != nil {
 		t.Fatalf("ioutil.ReadFile(%q) = %v", filename, err)
 	}
-	v := &utils.GCEURLMap{}
+	v := &types2.GCEURLMap{}
 	if err := json.Unmarshal(data, v); err != nil {
 		t.Fatalf("json.Unmarshal(%q) = %v", filename, err)
 	}

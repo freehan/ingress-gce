@@ -17,25 +17,25 @@ limitations under the License.
 package features
 
 import (
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
 	"k8s.io/ingress-gce/pkg/composite"
 	testutils "k8s.io/ingress-gce/pkg/test"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 func TestEnsureLogging(t *testing.T) {
 	for _, tc := range []struct {
 		desc         string
-		sp           utils.ServicePort
+		sp           types.ServicePort
 		be           *composite.BackendService
 		expectUpdate bool
 	}{
 		{
 			desc: "logging configurations are missing from spec, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: nil,
@@ -52,7 +52,7 @@ func TestEnsureLogging(t *testing.T) {
 		},
 		{
 			desc: "empty log config, updated to disable logging",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{},
@@ -69,7 +69,7 @@ func TestEnsureLogging(t *testing.T) {
 		},
 		{
 			desc: "settings are identical, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -89,7 +89,7 @@ func TestEnsureLogging(t *testing.T) {
 		},
 		{
 			desc: "logging is disabled but config is different, no update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -109,7 +109,7 @@ func TestEnsureLogging(t *testing.T) {
 		},
 		{
 			desc: "no existing settings, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -126,7 +126,7 @@ func TestEnsureLogging(t *testing.T) {
 		},
 		{
 			desc: "sample rate is different, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -146,7 +146,7 @@ func TestEnsureLogging(t *testing.T) {
 		},
 		{
 			desc: "enable logging, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -165,7 +165,7 @@ func TestEnsureLogging(t *testing.T) {
 		},
 		{
 			desc: "disable logging, update needed",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -195,12 +195,12 @@ func TestEnsureLogging(t *testing.T) {
 func TestExpectedBackendServiceLogConfig(t *testing.T) {
 	for _, tc := range []struct {
 		desc            string
-		sp              utils.ServicePort
+		sp              types.ServicePort
 		expectLogConfig *composite.BackendServiceLogConfig
 	}{
 		{
 			desc: "empty log config",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{},
@@ -213,7 +213,7 @@ func TestExpectedBackendServiceLogConfig(t *testing.T) {
 		},
 		{
 			desc: "logging disabled",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -229,7 +229,7 @@ func TestExpectedBackendServiceLogConfig(t *testing.T) {
 		},
 		{
 			desc: "logging enabled",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{
@@ -246,7 +246,7 @@ func TestExpectedBackendServiceLogConfig(t *testing.T) {
 		},
 		{
 			desc: "logging enabled, invalid sample rate",
-			sp: utils.ServicePort{
+			sp: types.ServicePort{
 				BackendConfig: &backendconfigv1.BackendConfig{
 					Spec: backendconfigv1.BackendConfigSpec{
 						Logging: &backendconfigv1.LogConfig{

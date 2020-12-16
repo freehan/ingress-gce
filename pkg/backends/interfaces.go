@@ -20,7 +20,7 @@ import (
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/ingress-gce/pkg/composite"
-	"k8s.io/ingress-gce/pkg/utils"
+	"k8s.io/ingress-gce/pkg/utils/types"
 )
 
 // GroupKey represents a single group for a backend. The implementation of
@@ -36,7 +36,7 @@ type Pool interface {
 	// Get a composite BackendService given a required version.
 	Get(name string, version meta.Version, scope meta.KeyType) (*composite.BackendService, error)
 	// Create a composite BackendService and returns it.
-	Create(sp utils.ServicePort, hcLink string) (*composite.BackendService, error)
+	Create(sp types.ServicePort, hcLink string) (*composite.BackendService, error)
 	// Update a BackendService given the composite type.
 	Update(be *composite.BackendService) error
 	// Delete a BackendService given its name.
@@ -53,9 +53,9 @@ type Syncer interface {
 	Init(p ProbeProvider)
 	// Sync a BackendService. Implementations should only create the BackendService
 	// but not its groups.
-	Sync(svcPorts []utils.ServicePort) error
+	Sync(svcPorts []types.ServicePort) error
 	// GC garbage collects unused BackendService's
-	GC(svcPorts []utils.ServicePort) error
+	GC(svcPorts []types.ServicePort) error
 	// Status returns the status of a BackendService given its name.
 	Status(name string, version meta.Version, scope meta.KeyType) (string, error)
 	// Shutdown cleans up all BackendService's previously synced.
@@ -65,7 +65,7 @@ type Syncer interface {
 // Linker is an interface to link backends with their associated groups.
 type Linker interface {
 	// Link a BackendService to its groups.
-	Link(sp utils.ServicePort, groups []GroupKey) error
+	Link(sp types.ServicePort, groups []GroupKey) error
 }
 
 // NEGGetter is an interface to retrieve NEG object
@@ -75,5 +75,5 @@ type NEGGetter interface {
 
 // ProbeProvider retrieves a probe struct given a nodePort
 type ProbeProvider interface {
-	GetProbe(sp utils.ServicePort) (*api_v1.Probe, error)
+	GetProbe(sp types.ServicePort) (*api_v1.Probe, error)
 }

@@ -18,12 +18,12 @@ package metrics
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"strconv"
 
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/ingress-gce/pkg/annotations"
 	frontendconfigv1beta1 "k8s.io/ingress-gce/pkg/apis/frontendconfig/v1beta1"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/klog"
 )
 
@@ -243,7 +243,7 @@ func hasSecretBasedCerts(ing *v1beta1.Ingress) bool {
 }
 
 // featuresForServicePort returns the list of features for given service port.
-func featuresForServicePort(sp utils.ServicePort) []feature {
+func featuresForServicePort(sp types.ServicePort) []feature {
 	features := []feature{servicePort}
 	svcPortKey := newServicePortKey(sp).string()
 	klog.V(4).Infof("Listing features for service port %s", svcPortKey)

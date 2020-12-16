@@ -19,6 +19,7 @@ package controller
 import (
 	context2 "context"
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"reflect"
 	"sort"
@@ -433,7 +434,7 @@ func TestIngressesWithSharedResourcesWithFinalizer(t *testing.T) {
 	// Assert service ports are being shared.
 	ingSvcPorts := lbc.ToSvcPorts([]*v1beta1.Ingress{ing})
 	otherIngSvcPorts := lbc.ToSvcPorts([]*v1beta1.Ingress{otherIng})
-	comparer := cmp.Comparer(func(a, b utils.ServicePort) bool {
+	comparer := cmp.Comparer(func(a, b types2.ServicePort) bool {
 		return reflect.DeepEqual(a, b)
 	})
 	if diff := cmp.Diff(ingSvcPorts, otherIngSvcPorts, comparer); diff != "" {
@@ -705,7 +706,7 @@ func TestToRuntimeInfoCerts(t *testing.T) {
 			},
 		},
 	}
-	urlMap := &utils.GCEURLMap{}
+	urlMap := &types2.GCEURLMap{}
 	lbInfo, err := lbc.toRuntimeInfo(ing, urlMap)
 	if err != nil {
 		t.Fatalf("lbc.toRuntimeInfo() = err %v", err)

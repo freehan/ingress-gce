@@ -22,7 +22,7 @@ import (
 	compute "google.golang.org/api/compute/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/ingress-gce/pkg/translator"
-	"k8s.io/ingress-gce/pkg/utils"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 )
@@ -53,7 +53,7 @@ type HealthChecker interface {
 	// ServicePort and Pod Probe definition.
 	//
 	// `probe` can be nil if no probe exists.
-	SyncServicePort(sp *utils.ServicePort, probe *v1.Probe) (string, error)
+	SyncServicePort(sp *types.ServicePort, probe *v1.Probe) (string, error)
 	Delete(name string, scope meta.KeyType) error
 	Get(name string, version meta.Version, scope meta.KeyType) (*translator.HealthCheck, error)
 }

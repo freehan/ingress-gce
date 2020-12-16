@@ -18,6 +18,7 @@ package features
 
 import (
 	"fmt"
+	"k8s.io/ingress-gce/pkg/utils/types"
 
 	"k8s.io/klog"
 
@@ -33,7 +34,7 @@ import (
 
 // EnsureSecurityPolicy ensures the security policy link on backend service.
 // TODO(mrhohn): Emit event when attach/detach security policy to backend service.
-func EnsureSecurityPolicy(cloud *gce.Cloud, sp utils.ServicePort, be *composite.BackendService, beName string) error {
+func EnsureSecurityPolicy(cloud *gce.Cloud, sp types.ServicePort, be *composite.BackendService, beName string) error {
 	if sp.BackendConfig.Spec.SecurityPolicy == nil {
 		return nil
 	}

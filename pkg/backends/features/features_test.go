@@ -17,6 +17,7 @@ limitations under the License.
 package features
 
 import (
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
@@ -26,11 +27,10 @@ import (
 
 	"k8s.io/ingress-gce/pkg/annotations"
 	backendconfigv1 "k8s.io/ingress-gce/pkg/apis/backendconfig/v1"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 var (
-	fakeSvcPortID = utils.ServicePortID{
+	fakeSvcPortID = types2.ServicePortID{
 		Service: types.NamespacedName{
 			Namespace: "testNS",
 			Name:      "testName",
@@ -38,16 +38,16 @@ var (
 		Port: intstr.IntOrString{IntVal: 80},
 	}
 
-	svcPortDefault = utils.ServicePort{
+	svcPortDefault = types2.ServicePort{
 		ID: fakeSvcPortID,
 	}
 
-	svcPortWithHTTP2 = utils.ServicePort{
+	svcPortWithHTTP2 = types2.ServicePort{
 		ID:       fakeSvcPortID,
 		Protocol: annotations.ProtocolHTTP2,
 	}
 
-	svcPortWithSecurityPolicy = utils.ServicePort{
+	svcPortWithSecurityPolicy = types2.ServicePort{
 		ID: fakeSvcPortID,
 		BackendConfig: &backendconfigv1.BackendConfig{
 			Spec: backendconfigv1.BackendConfigSpec{
@@ -58,7 +58,7 @@ var (
 		},
 	}
 
-	svcPortWithHTTP2SecurityPolicy = utils.ServicePort{
+	svcPortWithHTTP2SecurityPolicy = types2.ServicePort{
 		ID:       fakeSvcPortID,
 		Protocol: annotations.ProtocolHTTP2,
 		BackendConfig: &backendconfigv1.BackendConfig{
@@ -70,7 +70,7 @@ var (
 		},
 	}
 
-	svcPortWithNEG = utils.ServicePort{
+	svcPortWithNEG = types2.ServicePort{
 		ID:         fakeSvcPortID,
 		NEGEnabled: true,
 	}
@@ -79,7 +79,7 @@ var (
 func TestFeaturesFromServicePort(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		svcPort          utils.ServicePort
+		svcPort          types2.ServicePort
 		expectedFeatures []string
 	}{
 		{
@@ -210,7 +210,7 @@ func TestVersionFromDescription(t *testing.T) {
 func TestVersionFromServicePort(t *testing.T) {
 	testCases := []struct {
 		desc            string
-		svcPort         utils.ServicePort
+		svcPort         types2.ServicePort
 		expectedVersion meta.Version
 	}{
 		{

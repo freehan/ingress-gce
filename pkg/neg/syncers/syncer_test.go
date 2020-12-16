@@ -18,6 +18,7 @@ package syncers
 
 import (
 	"fmt"
+	types2 "k8s.io/ingress-gce/pkg/utils/types"
 	"testing"
 	"time"
 
@@ -26,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/record"
 	negtypes "k8s.io/ingress-gce/pkg/neg/types"
-	"k8s.io/ingress-gce/pkg/utils"
 )
 
 const (
@@ -39,8 +39,8 @@ const (
 )
 
 var (
-	defaultBackend = utils.ServicePort{
-		ID: utils.ServicePortID{
+	defaultBackend = types2.ServicePort{
+		ID: types2.ServicePortID{
 			Service: types.NamespacedName{
 				Name:      "default-http-backend",
 				Namespace: "kube-system",

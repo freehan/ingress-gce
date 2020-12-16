@@ -15,6 +15,7 @@ package backends
 
 import (
 	"context"
+	"k8s.io/ingress-gce/pkg/utils/types"
 	"net/http"
 	"testing"
 
@@ -28,7 +29,6 @@ import (
 	"k8s.io/ingress-gce/pkg/backends/features"
 	"k8s.io/ingress-gce/pkg/instances"
 	"k8s.io/ingress-gce/pkg/test"
-	"k8s.io/ingress-gce/pkg/utils"
 	"k8s.io/legacy-cloud-providers/gce"
 )
 
@@ -52,7 +52,7 @@ func TestLink(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	linker := newTestIGLinker(fakeGCE, fakeNodePool)
 
-	sp := utils.ServicePort{NodePort: 8080, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
+	sp := types.ServicePort{NodePort: 8080, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
 
 	// Mimic the instance group being created
 	if _, err := linker.instancePool.EnsureInstanceGroupsAndPorts(defaultNamer.InstanceGroup(), []int64{sp.NodePort}); err != nil {
@@ -82,7 +82,7 @@ func TestLinkWithCreationModeError(t *testing.T) {
 	fakeGCE := gce.NewFakeGCECloud(gce.DefaultTestClusterValues())
 	linker := newTestIGLinker(fakeGCE, fakeNodePool)
 
-	sp := utils.ServicePort{NodePort: 8080, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
+	sp := types.ServicePort{NodePort: 8080, Protocol: annotations.ProtocolHTTP, BackendNamer: defaultNamer}
 	modes := []BalancingMode{Rate, Utilization}
 
 	// block the update of Backends with the given balancingMode
